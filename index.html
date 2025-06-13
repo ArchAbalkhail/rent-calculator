@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة تحليل أجرة عقار</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>حاسبة تحليل أجرة عقار</h1>
+        
+        <div class="input-section">
+            <h2>معلومات العقار</h2>
+            <div class="form-group">
+                <label for="propertyValue">قيمة العقار</label>
+                <input type="number" id="propertyValue" min="0" step="1000">
+            </div>
+            <div class="form-group">
+                <label for="rentAmount">قيمة الإيجار السنوي</label>
+                <input type="number" id="rentAmount" min="0" step="100">
+            </div>
+            <div class="form-group">
+                <label for="expenses">المصاريف السنوية</label>
+                <input type="number" id="expenses" min="0" step="100">
+            </div>
+            <div class="form-group">
+                <label for="capRate">معدل الرسملة (%)</label>
+                <input type="number" id="capRate" min="0" max="100" step="0.1">
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h2>معلومات التمويل</h2>
+            <div class="form-group">
+                <label for="loanAmount">مبلغ التمويل</label>
+                <input type="number" id="loanAmount" min="0" step="1000">
+            </div>
+            <div class="form-group">
+                <label for="interestRate">معدل الفائدة (%)</label>
+                <input type="number" id="interestRate" min="0" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="loanTerm">مدة التمويل (سنوات)</label>
+                <input type="number" id="loanTerm" min="1" max="30" step="1">
+            </div>
+        </div>
+
+        <button onclick="calculate()">احسب النتائج</button>
+
+        <div id="results" class="results-section" style="display: none;">
+            <h2>النتائج</h2>
+            <div class="result-item">
+                <span>صافي الدخل التشغيلي:</span>
+                <span id="noi"></span>
+            </div>
+            <div class="result-item">
+                <span>العائد على الاستثمار:</span>
+                <span id="roi"></span>
+            </div>
+            <div class="result-item">
+                <span>نسبة تغطية خدمة الدين:</span>
+                <span id="dscr"></span>
+            </div>
+            <div class="result-item">
+                <span>التدفق النقدي قبل الضريبة:</span>
+                <span id="cashFlow"></span>
+            </div>
+        </div>
+    </div>
+    <script src="js/calculator.js"></script>
+</body>
+</html>
