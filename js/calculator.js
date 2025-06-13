@@ -252,10 +252,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let rentVal = sliderRentValOverride !== null
       ? sliderRentValOverride
       : +document.getElementById('annualRent').value;
-
+        document.getElementById('totalDevCost').textContent = "123456";
+        console.log("تم تحديث العنصر يدوياً");
     const results = financials(rentVal);
-    document.getElementById('totalDevCost').textContent = "123456";
-    console.log("تم تحديث العنصر يدوياً");
+
 
     // تحديث نتائج التكاليف داخل بطاقة التكاليف
     buildingAreasSpan.textContent = numberFormat(results.buildingAreas);
