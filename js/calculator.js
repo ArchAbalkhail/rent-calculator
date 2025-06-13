@@ -252,8 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let rentVal = sliderRentValOverride !== null
       ? sliderRentValOverride
       : +document.getElementById('annualRent').value;
-        document.getElementById('totalDevCost').textContent = "123456";
-        console.log("تم تحديث العنصر يدوياً");
+
     const results = financials(rentVal);
 
 
@@ -317,6 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
       </tfoot>
     </table>`;
     cashflowTableDiv.innerHTML = tableHtml;
+    
+    document.getElementById('totalDevCost').textContent = "123456";
+    console.log("تم تحديث العنصر يدوياً");
   }
 
   function updateSliderAndResults() {
