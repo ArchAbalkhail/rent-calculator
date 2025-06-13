@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const buildingAreas = landArea * buildRatio;
     const siteArea = landArea - (landArea * buildPercent);
-    const constructionCost = 
+    const constructionCost =
       (buildingAreas * buildCost) +
       (siteArea * siteCost) +
       (landArea * basementCost);
