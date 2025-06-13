@@ -1,24 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('calc-form');
   const inputs = form.querySelectorAll('input,select');
-  // تكاليف رأسمالية
-  const buildingAreas = document.getElementById('buildingAreas');
-  const siteArea = document.getElementById('siteArea');
-  const constructionCost = document.getElementById('constructionCost');
-  // النتائج
-  const totalDevCost = document.getElementById('totalDevCost');
-  const totalContractRent = document.getElementById('totalContractRent');
-  const avgAnnualRent = document.getElementById('avgAnnualRent');
-  const avgYearIncome = document.getElementById('avgYearIncome');
-  const avgNetIncome = document.getElementById('avgNetIncome');
-  const totalCashflow = document.getElementById('totalCashflow');
-  const npvResult = document.getElementById('npvResult');
-  const irrResult = document.getElementById('irrResult');
-  const breakEvenPoint = document.getElementById('breakEvenPoint');
-  // سلايدر
+  const buildingAreasSpan = document.getElementById('buildingAreas');
+  const siteAreaSpan = document.getElementById('siteArea');
+  const constructionCostSpan = document.getElementById('constructionCost');
+  const totalDevCostSpan = document.getElementById('totalDevCost');
+  const totalContractRentSpan = document.getElementById('totalContractRent');
+  const avgAnnualRentSpan = document.getElementById('avgAnnualRent');
+  const avgYearIncomeSpan = document.getElementById('avgYearIncome');
+  const avgNetIncomeSpan = document.getElementById('avgNetIncome');
+  const totalCashflowSpan = document.getElementById('totalCashflow');
+  const npvResultSpan = document.getElementById('npvResult');
+  const irrResultSpan = document.getElementById('irrResult');
+  const breakEvenPointSpan = document.getElementById('breakEvenPoint');
   const maxRentSlider = document.getElementById('maxRentSlider');
   const sliderRentVal = document.getElementById('sliderRentVal');
-  // جدول التدفقات
   const cashflowTableDiv = document.getElementById('cashflowTable');
 
   function numberFormat(n) {
@@ -255,23 +251,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const results = financials(rentVal);
 
-
     // تحديث نتائج التكاليف داخل بطاقة التكاليف
-    buildingAreas.textContent = numberFormat(results.buildingAreas);
-    siteArea.textContent = numberFormat(results.siteArea);
-    constructionCost.textContent = numberFormat(results.constructionCost);
+    buildingAreasSpan.textContent = numberFormat(results.buildingAreas);
+    siteAreaSpan.textContent = numberFormat(results.siteArea);
+    constructionCostSpan.textContent = numberFormat(results.constructionCost);
 
     // قائمة النتائج المختصرة فقط
-    totalDevCost.textContent = numberFormat(results.totalDevCost);
-    totalContractRent.textContent = numberFormat(results.totals.totalContractRent);
-    avgAnnualRent.textContent = numberFormat(results.totals.avgAnnualRent);
-    avgYearIncome.textContent = numberFormat(results.totals.avgYearIncome);
-    avgNetIncome.textContent = numberFormat(results.totals.avgNetIncome);
-    totalCashflow.textContent = numberFormat(results.totals.sumCashflow);
-    npvResult.textContent = numberFormat(results.npv);
+    totalDevCostSpan.textContent = numberFormat(results.totalDevCost);
+    totalContractRentSpan.textContent = numberFormat(results.totals.totalContractRent);
+    avgAnnualRentSpan.textContent = numberFormat(results.totals.avgAnnualRent);
+    avgYearIncomeSpan.textContent = numberFormat(results.totals.avgYearIncome);
+    avgNetIncomeSpan.textContent = numberFormat(results.totals.avgNetIncome);
+    totalCashflowSpan.textContent = numberFormat(results.totals.sumCashflow);
+    npvResultSpan.textContent = numberFormat(results.npv);
     let irr = computeIRR(results.cashflows, results.totalDevCost);
-    irrResult.textContent = (irr !== null && isFinite(irr)) ? irr.toFixed(2) : "غير متحقق";
-    breakEvenPoint.textContent = results.breakEvenText;
+    irrResultSpan.textContent = (irr !== null && isFinite(irr)) ? irr.toFixed(2) : "غير متحقق";
+    breakEvenPointSpan.textContent = results.breakEvenText;
 
     // جدول التدفقات
     let tableHtml = `
@@ -316,9 +311,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </tfoot>
     </table>`;
     cashflowTableDiv.innerHTML = tableHtml;
-    
-    document.getElementById('totalDevCost').textContent = "123456";
-    console.log("تم تحديث العنصر يدوياً");
   }
 
   function updateSliderAndResults() {
