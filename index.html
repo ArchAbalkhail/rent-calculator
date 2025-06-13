@@ -92,8 +92,23 @@
     <div id="cashflowTable"></div>
   </div>
 
+  <!-- إضافة div لعرض رسائل الخطأ -->
+  <div id="error-messages" style="color: red; text-align: center; margin-top: 20px;"></div>
+
+  <!-- ترتيب السكربتات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="js/calculator.js"></script>
+  <script>
+    // التأكد من تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      // تحميل ملف الحاسبة
+      const script = document.createElement('script');
+      script.src = 'js/calculator.js';
+      script.onerror = function() {
+        document.getElementById('error-messages').textContent = 'حدث خطأ في تحميل ملف الحسابات';
+      };
+      document.body.appendChild(script);
+    });
+  </script>
 </body>
 </html>
