@@ -31,6 +31,7 @@
       <label>فترة الزيادة الإيجارية (بالسنوات) <input type="number" id="increaseCycle" min="1" max="10" value="2"></label>
       <label>قيمة الأجرة السنوية (ريال) <input type="number" id="annualRent" min="0" step="1000" value="200000"></label>
     </div>
+
     <div class="card">
       <h2>معلومات التكاليف الرأسمالية للمشروع</h2>
       <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
@@ -49,6 +50,22 @@
         <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
       </div>
     </div>
+
+    <div class="card">
+      <h2>خيارات التمويل (القرض)</h2>
+      <label>نسبة القرض إلى رأس المال (%) <input type="number" id="loanToValue" min="0" max="100" value="60"></label>
+      <label>مدة القرض (سنة) <input type="number" id="loanYears" min="1" max="50" value="10"></label>
+      <label>نسبة الفائدة السنوية (%) <input type="number" id="interestRate" min="0" max="100" step="0.01" value="6"></label>
+      <label>
+        طريقة السداد
+        <select id="loanType">
+          <option value="equalInstallments">أقساط متساوية (أمورتايزد)</option>
+          <option value="interestOnly">فائدة فقط</option>
+          <option value="bullet">دفعة واحدة في نهاية المدة</option>
+        </select>
+      </label>
+    </div>
+
     <div class="card">
       <h2>معلومات الدخل</h2>
       <label>إجمالي الدخل (ريال سنوي) <input type="number" id="totalIncome" min="0" value="5000000"></label>
@@ -58,6 +75,7 @@
       <label>نسبة النمو للوصول إلى اجمالي الدخل (%) <input type="number" id="targetGrowthPercent" min="0" value="50"></label>
       <label>نسبة بداية الدخل من اجمالي الدخل (%) <input type="number" id="startIncomePercent" min="0" max="100" value="50"></label>
     </div>
+
     <div class="card">
       <h2>الخصم (معدل الرسملة / تكلفة رأس المال)</h2>
       <label>معدل الرسملة (تكلفة رأس المال) (%) <input type="number" id="discountRate" min="0" step="0.01" value="10"></label>
@@ -74,10 +92,15 @@
     <div class="result-row"><span class="result-label">إجمالي صافي التدفقات النقدية:</span> <span id="totalCashflow"></span> ريال</div>
     <div class="result-row"><span class="result-label">صافي القيمة الحالية (NPV):</span> <span id="npvResult"></span> ريال</div>
     <div class="result-row"><span class="result-label">معدل العائد الداخلي (IRR):</span> <span id="irrResult"></span> %</div>
-    <div class="result-row">
-      <span class="result-label">نقطة التعادل:</span>
-      <span id="breakEvenPoint" class="break-even"></span>
-    </div>
+    <div class="result-row"><span class="result-label">نقطة التعادل:</span> <span id="breakEvenPoint" class="break-even"></span></div>
+
+    <!-- نتائج التمويل -->
+    <div class="result-row"><span class="result-label">مجموع التمويل (القرض):</span> <span id="loanAmount"></span> ريال</div>
+    <div class="result-row"><span class="result-label">خدمة الدين السنوية:</span> <span id="annualDebtService"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي التدفق النقدي بعد خدمة الدين:</span> <span id="netCashflowAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي القيمة الحالية بعد الدين (NPV):</span> <span id="npvAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">معدل العائد الداخلي بعد الدين (IRR):</span> <span id="irrAfterDebt"></span> %</div>
+
     <div class="slider-container">
       <span class="slider-label-modern">أعلى قيمة تأجيرية يمكن دفعها:</span>
       <input type="range" id="maxRentSlider" min="0" max="500000" step="100" value="200000">
