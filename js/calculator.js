@@ -30,6 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const capDirectDiv = document.getElementById('cap-direct');
   const directCapCostInput = document.getElementById('directCapCost');
 
+  // خيارات القرض balloon
+  const loanTypeSelect = document.getElementById('loanType');
+  const balloonOptionsDiv = document.getElementById('balloon-options');
+  const balloonValueInput = document.getElementById('balloonValue');
+  const balloonTypeSelect = document.getElementById('balloonType');
+  const loanGraceInput = document.getElementById('loanGrace');
+
   function getCurrentCapMode() {
     let mode = 'detailed';
     capModeRadios.forEach(r => { if (r.checked) mode = r.value; });
@@ -47,6 +54,19 @@ document.addEventListener('DOMContentLoaded', function() {
       capDirectDiv.classList.remove('hidden');
     }
   }
+
+  // إظهار خيارات balloon حسب نوع القرض
+  function updateBalloonVisibility() {
+    if (loanTypeSelect.value === 'balloon') {
+      balloonOptionsDiv.classList.remove('hidden');
+    } else {
+      balloonOptionsDiv.classList.add('hidden');
+    }
+  }
+  loanTypeSelect.addEventListener('change', () => {
+    updateBalloonVisibility();
+    updateSliderAndResults();
+  });
 
   capModeRadios.forEach(r => r.addEventListener('change', () => {
     updateCapVisibility();
@@ -67,42 +87,73 @@ document.addEventListener('DOMContentLoaded', function() {
     return value;
   }
 
-  function loanAnnualPayment(amount, annualRate, years, type) {
+  function getBalloonFinalPayment(loanAmount) {
+    const balloonType = balloonTypeSelect.value;
+    const balloonValue = +balloonValueInput.value;
+    if (balloonType === 'percent') {
+      return loanAmount * (balloonValue / 100);
+    }
+    return balloonValue;
+  }
+
+  // graceYears: فترة السماح قبل بدء السداد
+  function loanDebtSchedule(amount, annualRate, years, type, totalYears, balloonFinalPayment, graceYears) {
+    let debtPayments = Array(totalYears).fill(0);
+    // فترة السماح: لا يوجد سداد في أول graceYears سنة (فقط الفوائد المستحقة)
+    let mainYears = years - graceYears;
+    if (mainYears < 1) mainYears = 1; // على الأقل سنة واحدة للسداد
+
+    if (type === 'equalInstallments') {
+      // خلال فترة السماح: لا دفع أقساط، فقط الفائدة (اختياري: يمكن تعديلها لاحقاً)
+      let pmt = loanAnnualPayment(amount, annualRate, years, type);
+      for (let i = 0; i < totalYears; i++) {
+        if (i < graceYears) {
+          // لا دفع قسط، فقط الفائدة (أو لا شيء حسب السياسة)
+          debtPayments[i] = 0;
+        } else if (i < years) {
+          debtPayments[i] = pmt;
+        }
+      }
+    } else if (type === 'balloon') {
+      // دفعات متساوية ثم دفعة أخيرة كبيرة
+      let balloon = balloonFinalPayment;
+      let principalToAmortize = amount - balloon;
+      let r = annualRate / 100;
+      let n = mainYears;
+      let pmt = n > 0 ? (principalToAmortize * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : 0;
+      for (let i = 0; i < totalYears; i++) {
+        if (i < graceYears) {
+          debtPayments[i] = 0;
+        } else if (i < years - 1) {
+          debtPayments[i] = pmt;
+        } else if (i === years - 1) {
+          debtPayments[i] = pmt + balloon;
+        }
+      }
+    }
+    return debtPayments;
+  }
+
+  function loanAnnualPayment(amount, annualRate, years, type, balloonFinalPayment = 0, graceYears = 0) {
+    let mainYears = years - graceYears;
+    if (mainYears < 1) mainYears = 1;
     if (type === 'equalInstallments') {
       if (annualRate === 0) return amount / years;
       const r = annualRate / 100;
       const n = years;
       const pmt = amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
       return pmt;
-    } else if (type === 'interestOnly') {
-      return amount * (annualRate / 100);
-    } else if (type === 'bullet') {
-      return amount * (annualRate / 100);
+    } else if (type === 'balloon') {
+      // الجزء الذي سيتم تسديده بأقساط
+      let balloon = balloonFinalPayment;
+      let principalToAmortize = amount - balloon;
+      let r = annualRate / 100;
+      let n = mainYears;
+      if (n <= 0) n = 1;
+      let pmt = n > 0 ? (principalToAmortize * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : 0;
+      return pmt;
     }
     return 0;
-  }
-
-  function loanDebtSchedule(amount, annualRate, years, type, totalYears) {
-    let debtPayments = Array(totalYears).fill(0);
-    if (type === 'equalInstallments') {
-      let pmt = loanAnnualPayment(amount, annualRate, years, type);
-      for (let i = 0; i < Math.min(years, totalYears); i++) {
-        debtPayments[i] = pmt;
-      }
-    } else if (type === 'interestOnly') {
-      let interest = amount * (annualRate / 100);
-      for (let i = 0; i < Math.min(years, totalYears); i++) {
-        debtPayments[i] = interest;
-      }
-      if (years <= totalYears) debtPayments[years - 1] += amount;
-    } else if (type === 'bullet') {
-      let interest = amount * (annualRate / 100);
-      for (let i = 0; i < Math.min(years, totalYears); i++) {
-        debtPayments[i] = interest;
-      }
-      if (years <= totalYears) debtPayments[years - 1] += amount;
-    }
-    return debtPayments;
   }
 
   function financials(annualRentBase) {
@@ -152,13 +203,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const loanToValue = +document.getElementById('loanToValue').value / 100;
     const loanYears = +document.getElementById('loanYears').value;
     const interestRate = +document.getElementById('interestRate').value;
-    const loanType = document.getElementById('loanType').value;
+    const loanType = loanTypeSelect.value;
+    const balloonFinalPayment = loanType === 'balloon' ? getBalloonFinalPayment(totalCapCost * loanToValue) : 0;
+    const loanGrace = +loanGraceInput.value;
 
     // حساب القرض
     const loanAmount = totalCapCost * loanToValue;
     const equityAmount = totalCapCost - loanAmount;
-    const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType);
-    const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years);
+    const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType, balloonFinalPayment, loanGrace);
+    const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years, balloonFinalPayment, loanGrace);
 
     let rows = [];
     let reachedFullIncome = false;
@@ -217,8 +270,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
       let netIncome = yearIncome * netIncomePercent;
       let devCostThisYear = (i <= projectDuration) ? devCostPerYear : 0;
-      let cashflow = netIncome - annualRent - devCostThisYear;
       let debtPayment = debtSchedule[i - 1] || 0;
+      let cashflow = netIncome - annualRent - devCostThisYear;
       let cashflowAfterDebt = cashflow - debtPayment;
 
       cumulativeCashflow += cashflow;
@@ -460,8 +513,12 @@ document.addEventListener('DOMContentLoaded', function() {
   inputs.forEach(i => i.addEventListener('input', updateSliderAndResults));
   maxRentSlider.addEventListener('input', updateUIFromSlider);
   directCapCostInput.addEventListener('input', updateSliderAndResults);
+  balloonValueInput.addEventListener('input', updateSliderAndResults);
+  balloonTypeSelect.addEventListener('change', updateSliderAndResults);
+  loanGraceInput.addEventListener('input', updateSliderAndResults);
 
   updateCapVisibility();
+  updateBalloonVisibility();
   updateSliderAndResults();
 
   document.getElementById('exportPDF').addEventListener('click', function() {
