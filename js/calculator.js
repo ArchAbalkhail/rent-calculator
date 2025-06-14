@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const sliderRentVal = document.getElementById('sliderRentVal');
   const cashflowTableDiv = document.getElementById('cashflowTable');
 
+  // عناصر الدين الجديدة
+  const loanAmountSpan = document.getElementById('loanAmount');
+  const annualDebtServiceSpan = document.getElementById('annualDebtService');
+  const netCashflowAfterDebtSpan = document.getElementById('netCashflowAfterDebt');
+  const npvAfterDebtSpan = document.getElementById('npvAfterDebt');
+  const irrAfterDebtSpan = document.getElementById('irrAfterDebt');
+
   function numberFormat(n) {
     return Number(n).toLocaleString('ar-EG', {maximumFractionDigits: 0});
   }
@@ -29,6 +36,49 @@ document.addEventListener('DOMContentLoaded', function() {
     if (unit === 'days') return value / 365;
     if (unit === 'percent') return (value / 100) * years;
     return value;
+  }
+
+  // دالة حساب القسط السنوي للقرض
+  function loanAnnualPayment(amount, annualRate, years, type) {
+    if (type === 'equalInstallments') {
+      // Amortized loan
+      if (annualRate === 0) return amount / years;
+      const r = annualRate / 100;
+      const n = years;
+      const pmt = amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      return pmt;
+    } else if (type === 'interestOnly') {
+      // Interest only
+      return amount * (annualRate / 100);
+    } else if (type === 'bullet') {
+      // دفع الفائدة سنويا والمبلغ الأصلي في النهاية
+      return amount * (annualRate / 100);
+    }
+    return 0;
+  }
+
+  function loanDebtSchedule(amount, annualRate, years, type, totalYears) {
+    let debtPayments = Array(totalYears).fill(0);
+    if (type === 'equalInstallments') {
+      let pmt = loanAnnualPayment(amount, annualRate, years, type);
+      for (let i = 0; i < Math.min(years, totalYears); i++) {
+        debtPayments[i] = pmt;
+      }
+    } else if (type === 'interestOnly') {
+      let interest = amount * (annualRate / 100);
+      for (let i = 0; i < Math.min(years, totalYears); i++) {
+        debtPayments[i] = interest;
+      }
+      // في نهاية القرض يتم دفع المبلغ الأصلي
+      if (years <= totalYears) debtPayments[years - 1] += amount;
+    } else if (type === 'bullet') {
+      let interest = amount * (annualRate / 100);
+      for (let i = 0; i < Math.min(years, totalYears); i++) {
+        debtPayments[i] = interest;
+      }
+      if (years <= totalYears) debtPayments[years - 1] += amount;
+    }
+    return debtPayments;
   }
 
   function financials(annualRentBase) {
@@ -57,6 +107,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const discountRate = +document.getElementById('discountRate').value / 100;
 
+    // متغيرات الدين
+    const loanToValue = +document.getElementById('loanToValue').value / 100;
+    const loanYears = +document.getElementById('loanYears').value;
+    const interestRate = +document.getElementById('interestRate').value;
+    const loanType = document.getElementById('loanType').value;
+
     const buildingAreas = landArea * buildRatio;
     const siteArea = landArea - (landArea * buildPercent);
     const constructionCost =
@@ -68,6 +124,12 @@ document.addEventListener('DOMContentLoaded', function() {
     );
     const devCostPerYear = projectDuration > 0 ? totalDevCost / projectDuration : totalDevCost;
 
+    // حساب القرض
+    const loanAmount = totalDevCost * loanToValue;
+    const equityAmount = totalDevCost - loanAmount;
+    const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType);
+    const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years);
+
     let rows = [];
     let reachedFullIncome = false;
     const fullFreeYears = Math.floor(freePeriod);
@@ -75,15 +137,17 @@ document.addEventListener('DOMContentLoaded', function() {
     let firstIncomeYear = Math.max(fullFreeYears, incomeStartYears) + 1;
     let yearIncome = 0;
     let cumulativeCashflow = 0;
+    let cumulativeCashflowAfterDebt = 0;
 
     let annualRent = 0;
     let rentYearBase = annualRentBase;
     let rentIncreaseCounter = 0;
 
-    let npv = 0;
+    let npv = 0, npvAfterDebt = 0;
 
-    let sumYearIncome = 0, sumNetIncome = 0, sumAnnualRent = 0, sumDevCost = 0, sumCashflow = 0;
+    let sumYearIncome = 0, sumNetIncome = 0, sumAnnualRent = 0, sumDevCost = 0, sumCashflow = 0, sumCashflowAfterDebt = 0;
     let cashflows = [];
+    let cashflowsAfterDebt = [];
     let totalContractRent = 0;
     let breakEvenYear = null;
     let breakEvenMonth = null;
@@ -124,17 +188,24 @@ document.addEventListener('DOMContentLoaded', function() {
       let netIncome = yearIncome * netIncomePercent;
       let devCostThisYear = (i <= projectDuration) ? devCostPerYear : 0;
       let cashflow = netIncome - annualRent - devCostThisYear;
+      let debtPayment = debtSchedule[i - 1] || 0;
+      let cashflowAfterDebt = cashflow - debtPayment;
+
       cumulativeCashflow += cashflow;
+      cumulativeCashflowAfterDebt += cashflowAfterDebt;
       npv += cashflow / Math.pow(1 + discountRate, i);
+      npvAfterDebt += cashflowAfterDebt / Math.pow(1 + discountRate, i);
 
       sumYearIncome += yearIncome;
       sumNetIncome += netIncome;
       sumAnnualRent += annualRent;
       sumDevCost += devCostThisYear;
       sumCashflow += cashflow;
+      sumCashflowAfterDebt += cashflowAfterDebt;
       totalContractRent += annualRent;
 
       cashflows.push(cashflow);
+      cashflowsAfterDebt.push(cashflowAfterDebt);
 
       // نقطة التعادل
       if (breakEvenIdx == null && cumulativeCashflow >= -1 && cumulativeCashflow <= 1) {
@@ -157,8 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
         netIncome: netIncome,
         annualRent: annualRent,
         devCostThisYear: devCostThisYear,
+        debtPayment: debtPayment,
         cashflow: cashflow,
-        cumulativeCashflow: cumulativeCashflow
+        cashflowAfterDebt: cashflowAfterDebt,
+        cumulativeCashflow: cumulativeCashflow,
+        cumulativeCashflowAfterDebt: cumulativeCashflowAfterDebt
       });
     }
 
@@ -178,9 +252,14 @@ document.addEventListener('DOMContentLoaded', function() {
       constructionCost,
       totalDevCost,
       npv,
+      npvAfterDebt,
       rows,
       cashflows,
+      cashflowsAfterDebt,
       breakEvenText,
+      loanAmount,
+      annualDebtService,
+      sumCashflowAfterDebt,
       totals: {
         sumYearIncome,
         sumNetIncome,
@@ -215,8 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
     return best;
   }
 
-  function computeIRR(cashflows, totalDevCost) {
-    let fullCashflows = [-totalDevCost, ...cashflows];
+  function computeIRR(cashflows, initialInvestment) {
+    let fullCashflows = [-initialInvestment, ...cashflows];
     let guess = 0.10;
     let maxIter = 1000;
     let tol = 1e-6;
@@ -268,6 +347,14 @@ document.addEventListener('DOMContentLoaded', function() {
     irrResultSpan.textContent = (irr !== null && isFinite(irr)) ? irr.toFixed(2) : "غير متحقق";
     breakEvenPointSpan.textContent = results.breakEvenText;
 
+    // تحديث عناصر الدين
+    loanAmountSpan.textContent = numberFormat(results.loanAmount);
+    annualDebtServiceSpan.textContent = numberFormat(results.annualDebtService);
+    netCashflowAfterDebtSpan.textContent = numberFormat(results.sumCashflowAfterDebt);
+    npvAfterDebtSpan.textContent = numberFormat(results.npvAfterDebt);
+    let irrAfterDebt = computeIRR(results.cashflowsAfterDebt, results.totalDevCost - results.loanAmount);
+    irrAfterDebtSpan.textContent = (irrAfterDebt !== null && isFinite(irrAfterDebt)) ? irrAfterDebt.toFixed(2) : "غير متحقق";
+
     // جدول التدفقات
     let tableHtml = `
       <table>
@@ -278,8 +365,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <th>صافي الدخل (ريال)</th>
             <th>الأجرة السنوية (ريال)</th>
             <th>تكاليف التطوير السنوية (ريال)</th>
+            <th>خدمة الدين (ريال)</th>
             <th>التدفق النقدي (ريال)</th>
+            <th>التدفق بعد الدين (ريال)</th>
             <th>صافي التدفقات التراكمي (ريال)</th>
+            <th>صافي التراكمي بعد الدين (ريال)</th>
           </tr>
         </thead>
         <tbody>
@@ -292,8 +382,11 @@ document.addEventListener('DOMContentLoaded', function() {
           <td>${numberFormat(r.netIncome)}</td>
           <td class="cashflow-negative">${r.annualRent > 0 ? '-' : ''}${numberFormat(r.annualRent)}</td>
           <td class="cashflow-negative">${r.devCostThisYear > 0 ? '-' : ''}${numberFormat(r.devCostThisYear)}</td>
+          <td class="cashflow-negative">${r.debtPayment > 0 ? '-' : ''}${numberFormat(r.debtPayment)}</td>
           <td class="${r.cashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cashflow)}</td>
+          <td class="${r.cashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cashflowAfterDebt)}</td>
           <td class="${r.cumulativeCashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cumulativeCashflow)}</td>
+          <td class="${r.cumulativeCashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cumulativeCashflowAfterDebt)}</td>
         </tr>
       `;
     });
@@ -305,7 +398,10 @@ document.addEventListener('DOMContentLoaded', function() {
           <td>${numberFormat(results.totals.sumNetIncome)}</td>
           <td class="cashflow-negative">${results.totals.sumAnnualRent > 0 ? '-' : ''}${numberFormat(results.totals.sumAnnualRent)}</td>
           <td class="cashflow-negative">${results.totals.sumDevCost > 0 ? '-' : ''}${numberFormat(results.totals.sumDevCost)}</td>
+          <td></td>
           <td class="${results.totals.sumCashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(results.totals.sumCashflow)}</td>
+          <td class="${results.sumCashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(results.sumCashflowAfterDebt)}</td>
+          <td></td>
           <td></td>
         </tr>
       </tfoot>
@@ -328,10 +424,8 @@ document.addEventListener('DOMContentLoaded', function() {
   inputs.forEach(i => i.addEventListener('input', updateSliderAndResults));
   maxRentSlider.addEventListener('input', updateUIFromSlider);
 
-  // تحديث النتائج عند تحميل الصفحة
   updateSliderAndResults();
 
-  // زر التصدير PDF
   document.getElementById('exportPDF').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
