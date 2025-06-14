@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .hidden { display: none; }
+    .radio-inline { margin-left: 20px; }
+    .inline-group { display: flex; align-items: center; gap: 8px; }
+  </style>
 </head>
 <body>
   <h1>حاسبة تحليل أجرة عقار</h1>
@@ -31,24 +36,68 @@
       <label>فترة الزيادة الإيجارية (بالسنوات) <input type="number" id="increaseCycle" min="1" max="10" value="2"></label>
       <label>قيمة الأجرة السنوية (ريال) <input type="number" id="annualRent" min="0" step="1000" value="200000"></label>
     </div>
+
     <div class="card">
       <h2>معلومات التكاليف الرأسمالية للمشروع</h2>
-      <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
-      <label>معامل البناء <input type="number" id="buildRatio" step="0.01" min="0" value="2"></label>
-      <label>نسبة البناء (%) <input type="number" id="buildPercent" min="0" max="100" value="70"></label>
-      <label>تكاليف البناء (ريال/م²) <input type="number" id="buildCost" min="0" value="2000"></label>
-      <label>تكاليف الموقع العام (ريال/م²) <input type="number" id="siteCost" min="0" value="150"></label>
-      <label>تكاليف القبو (ريال/م²) <input type="number" id="basementCost" min="0" value="500"></label>
-      <label>تكاليف الإشراف الهندسي (%) <input type="number" id="engSupervisionPercent" min="0" value="5"></label>
-      <label>تكاليف غير مباشرة (%) <input type="number" id="indirectCostPercent" min="0" value="7"></label>
-      <label>مخاطر ارتفاع الأسعار (%) <input type="number" id="riskPercent" min="0" value="10"></label>
-      <label>المدة الزمنية للمشروع (بالسنوات) <input type="number" id="projectDuration" min="1" value="2"></label>
-      <div class="inline-stats">
-        <span><span class="inline-stat-label">مسطحات البناء:</span> <span id="buildingAreas"></span> م²</span>
-        <span><span class="inline-stat-label">الموقع العام:</span> <span id="siteArea"></span> م²</span>
-        <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
+      <div>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="detailed" checked> حساب تفصيلي
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="direct"> إدخال مباشر
+        </label>
+      </div>
+      <div id="cap-details">
+        <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
+        <label>معامل البناء <input type="number" id="buildRatio" step="0.01" min="0" value="2"></label>
+        <label>نسبة البناء (%) <input type="number" id="buildPercent" min="0" max="100" value="70"></label>
+        <label>تكاليف البناء (ريال/م²) <input type="number" id="buildCost" min="0" value="2000"></label>
+        <label>تكاليف الموقع العام (ريال/م²) <input type="number" id="siteCost" min="0" value="150"></label>
+        <label>تكاليف القبو (ريال/م²) <input type="number" id="basementCost" min="0" value="500"></label>
+        <label>تكاليف الإشراف الهندسي (%) <input type="number" id="engSupervisionPercent" min="0" value="5"></label>
+        <label>تكاليف غير مباشرة (%) <input type="number" id="indirectCostPercent" min="0" value="7"></label>
+        <label>مخاطر ارتفاع الأسعار (%) <input type="number" id="riskPercent" min="0" value="10"></label>
+        <label>المدة الزمنية للمشروع (بالسنوات) <input type="number" id="projectDuration" min="1" value="2"></label>
+        <div class="inline-stats">
+          <span><span class="inline-stat-label">مسطحات البناء:</span> <span id="buildingAreas"></span> م²</span>
+          <span><span class="inline-stat-label">الموقع العام:</span> <span id="siteArea"></span> م²</span>
+          <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
+        </div>
+      </div>
+      <div id="cap-direct" class="hidden">
+        <label>إجمالي التكاليف الرأسمالية (مباشر) <input type="number" id="directCapCost" min="0" value="5000000"></label>
+      </div>
+      <div style="margin-top: 10px;">
+        <b>إجمالي التكاليف الرأسمالية:</b>
+        <span id="totalCapCost" style="font-weight: bold; color:#0055aa"></span> ريال
       </div>
     </div>
+
+    <div class="card">
+      <h2>خيارات التمويل (القرض)</h2>
+      <label>نسبة القرض إلى رأس المال (%) <input type="number" id="loanToValue" min="0" max="100" value="60"></label>
+      <label>مدة القرض (سنة) <input type="number" id="loanYears" min="1" max="50" value="10"></label>
+      <label>نسبة الفائدة السنوية (%) <input type="number" id="interestRate" min="0" max="100" step="0.01" value="6"></label>
+      <label>فترة السماح لبدء السداد (سنوات) <input type="number" id="loanGrace" min="0" max="20" value="0"></label>
+      <label>
+        طريقة السداد
+        <select id="loanType">
+          <option value="equalInstallments">دفعات متساوية</option>
+          <option value="balloon">دفعات مع دفعة أخيرة</option>
+        </select>
+      </label>
+      <div id="balloon-options" class="hidden" style="margin-top: 8px;">
+        <span class="inline-group">
+          <span>الدفعة الأخيرة:</span>
+          <input type="number" id="balloonValue" min="0" value="0" style="width: 90px;">
+          <select id="balloonType">
+            <option value="amount">ريال</option>
+            <option value="percent">نسبة من القرض %</option>
+          </select>
+        </span>
+      </div>
+    </div>
+
     <div class="card">
       <h2>معلومات الدخل</h2>
       <label>إجمالي الدخل (ريال سنوي) <input type="number" id="totalIncome" min="0" value="5000000"></label>
@@ -58,6 +107,7 @@
       <label>نسبة النمو للوصول إلى اجمالي الدخل (%) <input type="number" id="targetGrowthPercent" min="0" value="50"></label>
       <label>نسبة بداية الدخل من اجمالي الدخل (%) <input type="number" id="startIncomePercent" min="0" max="100" value="50"></label>
     </div>
+
     <div class="card">
       <h2>الخصم (معدل الرسملة / تكلفة رأس المال)</h2>
       <label>معدل الرسملة (تكلفة رأس المال) (%) <input type="number" id="discountRate" min="0" step="0.01" value="10"></label>
@@ -66,7 +116,7 @@
 
   <div class="results" id="results">
     <h2>النتائج</h2>
-    <div class="result-row"><span class="result-label">إجمالي تكاليف التطوير:</span> <span id="totalDevCost"></span> ريال</div>
+    <div class="result-row"><span class="result-label">إجمالي التكاليف الرأسمالية:</span> <span id="totalDevCost"></span> ريال</div>
     <div class="result-row"><span class="result-label">إجمالي قيمة عقد الإيجار:</span> <span id="totalContractRent"></span> ريال</div>
     <div class="result-row"><span class="result-label">متوسط الأجرة السنوية:</span> <span id="avgAnnualRent"></span> ريال</div>
     <div class="result-row"><span class="result-label">متوسط إجمالي الدخل السنوي:</span> <span id="avgYearIncome"></span> ريال</div>
@@ -74,10 +124,15 @@
     <div class="result-row"><span class="result-label">إجمالي صافي التدفقات النقدية:</span> <span id="totalCashflow"></span> ريال</div>
     <div class="result-row"><span class="result-label">صافي القيمة الحالية (NPV):</span> <span id="npvResult"></span> ريال</div>
     <div class="result-row"><span class="result-label">معدل العائد الداخلي (IRR):</span> <span id="irrResult"></span> %</div>
-    <div class="result-row">
-      <span class="result-label">نقطة التعادل:</span>
-      <span id="breakEvenPoint" class="break-even"></span>
-    </div>
+    <div class="result-row"><span class="result-label">نقطة التعادل:</span> <span id="breakEvenPoint" class="break-even"></span></div>
+
+    <!-- نتائج التمويل -->
+    <div class="result-row"><span class="result-label">مجموع التمويل (القرض):</span> <span id="loanAmount"></span> ريال</div>
+    <div class="result-row"><span class="result-label">خدمة الدين السنوية:</span> <span id="annualDebtService"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي التدفق النقدي بعد خدمة الدين:</span> <span id="netCashflowAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي القيمة الحالية بعد الدين (NPV):</span> <span id="npvAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">معدل العائد الداخلي بعد الدين (IRR):</span> <span id="irrAfterDebt"></span> %</div>
+
     <div class="slider-container">
       <span class="slider-label-modern">أعلى قيمة تأجيرية يمكن دفعها:</span>
       <input type="range" id="maxRentSlider" min="0" max="500000" step="100" value="200000">
@@ -92,10 +147,8 @@
     <div id="cashflowTable"></div>
   </div>
 
-  <!-- إضافة div لعرض رسائل الخطأ -->
   <div id="error-messages" style="color: red; text-align: center; margin-top: 20px;"></div>
 
-  <!-- ترتيب السكربتات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/calculator.js"></script>
