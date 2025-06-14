@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .hidden { display: none; }
+    .radio-inline { margin-left: 20px; }
+  </style>
 </head>
 <body>
   <h1>حاسبة تحليل أجرة عقار</h1>
@@ -34,20 +38,37 @@
 
     <div class="card">
       <h2>معلومات التكاليف الرأسمالية للمشروع</h2>
-      <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
-      <label>معامل البناء <input type="number" id="buildRatio" step="0.01" min="0" value="2"></label>
-      <label>نسبة البناء (%) <input type="number" id="buildPercent" min="0" max="100" value="70"></label>
-      <label>تكاليف البناء (ريال/م²) <input type="number" id="buildCost" min="0" value="2000"></label>
-      <label>تكاليف الموقع العام (ريال/م²) <input type="number" id="siteCost" min="0" value="150"></label>
-      <label>تكاليف القبو (ريال/م²) <input type="number" id="basementCost" min="0" value="500"></label>
-      <label>تكاليف الإشراف الهندسي (%) <input type="number" id="engSupervisionPercent" min="0" value="5"></label>
-      <label>تكاليف غير مباشرة (%) <input type="number" id="indirectCostPercent" min="0" value="7"></label>
-      <label>مخاطر ارتفاع الأسعار (%) <input type="number" id="riskPercent" min="0" value="10"></label>
-      <label>المدة الزمنية للمشروع (بالسنوات) <input type="number" id="projectDuration" min="1" value="2"></label>
-      <div class="inline-stats">
-        <span><span class="inline-stat-label">مسطحات البناء:</span> <span id="buildingAreas"></span> م²</span>
-        <span><span class="inline-stat-label">الموقع العام:</span> <span id="siteArea"></span> م²</span>
-        <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
+      <div>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="detailed" checked> حساب تفصيلي
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="direct"> إدخال مباشر
+        </label>
+      </div>
+      <div id="cap-details">
+        <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
+        <label>معامل البناء <input type="number" id="buildRatio" step="0.01" min="0" value="2"></label>
+        <label>نسبة البناء (%) <input type="number" id="buildPercent" min="0" max="100" value="70"></label>
+        <label>تكاليف البناء (ريال/م²) <input type="number" id="buildCost" min="0" value="2000"></label>
+        <label>تكاليف الموقع العام (ريال/م²) <input type="number" id="siteCost" min="0" value="150"></label>
+        <label>تكاليف القبو (ريال/م²) <input type="number" id="basementCost" min="0" value="500"></label>
+        <label>تكاليف الإشراف الهندسي (%) <input type="number" id="engSupervisionPercent" min="0" value="5"></label>
+        <label>تكاليف غير مباشرة (%) <input type="number" id="indirectCostPercent" min="0" value="7"></label>
+        <label>مخاطر ارتفاع الأسعار (%) <input type="number" id="riskPercent" min="0" value="10"></label>
+        <label>المدة الزمنية للمشروع (بالسنوات) <input type="number" id="projectDuration" min="1" value="2"></label>
+        <div class="inline-stats">
+          <span><span class="inline-stat-label">مسطحات البناء:</span> <span id="buildingAreas"></span> م²</span>
+          <span><span class="inline-stat-label">الموقع العام:</span> <span id="siteArea"></span> م²</span>
+          <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
+        </div>
+      </div>
+      <div id="cap-direct" class="hidden">
+        <label>إجمالي التكاليف الرأسمالية (مباشر) <input type="number" id="directCapCost" min="0" value="5000000"></label>
+      </div>
+      <div style="margin-top: 10px;">
+        <b>إجمالي التكاليف الرأسمالية:</b>
+        <span id="totalCapCost" style="font-weight: bold; color:#0055aa"></span> ريال
       </div>
     </div>
 
@@ -84,7 +105,7 @@
 
   <div class="results" id="results">
     <h2>النتائج</h2>
-    <div class="result-row"><span class="result-label">إجمالي تكاليف التطوير:</span> <span id="totalDevCost"></span> ريال</div>
+    <div class="result-row"><span class="result-label">إجمالي التكاليف الرأسمالية:</span> <span id="totalDevCost"></span> ريال</div>
     <div class="result-row"><span class="result-label">إجمالي قيمة عقد الإيجار:</span> <span id="totalContractRent"></span> ريال</div>
     <div class="result-row"><span class="result-label">متوسط الأجرة السنوية:</span> <span id="avgAnnualRent"></span> ريال</div>
     <div class="result-row"><span class="result-label">متوسط إجمالي الدخل السنوي:</span> <span id="avgYearIncome"></span> ريال</div>
@@ -115,10 +136,8 @@
     <div id="cashflowTable"></div>
   </div>
 
-  <!-- إضافة div لعرض رسائل الخطأ -->
   <div id="error-messages" style="color: red; text-align: center; margin-top: 20px;"></div>
 
-  <!-- ترتيب السكربتات -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/calculator.js"></script>
