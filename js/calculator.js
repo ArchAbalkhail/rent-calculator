@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // ... تعريف المتغيرات كالمعتاد ...
+  // ... تعريف المتغيرات للعناصر ...
   const form = document.getElementById('calc-form');
   const inputs = form.querySelectorAll('input,select');
   const buildingAreasSpan = document.getElementById('buildingAreas');
@@ -76,8 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return balloonValue;
   }
-
-  // حساب خدمة الدين مع دفعة أخيرة وفترة سماح
+  // الدالة الصحيحة لحساب خدمة الدين في حالة دفعة أخيرة مع فترة السماح
   function loanDebtSchedule(amount, annualRate, years, type, totalYears, balloonFinalPayment, graceYears) {
     let debtPayments = Array(totalYears).fill(0);
     if (type === 'equalInstallments') {
@@ -97,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
       let balloon = balloonFinalPayment;
       let principalToAmortize = amount - balloon;
       let yearlyPrincipal = (n > 1) ? principalToAmortize / n : principalToAmortize;
-
       let balance = amount;
       for (let i = 0; i < totalYears; i++) {
         if (i < graceYears) {
@@ -130,13 +128,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     return 0;
   }
-
   function financials(annualRentBase) {
     const years = +document.getElementById('years').value;
     const freePeriod = getFreePeriodInYears();
     const rentIncreasePercent = +document.getElementById('rentIncreasePercent').value / 100;
     const increaseCycle = +document.getElementById('increaseCycle').value;
-
     const landArea = +document.getElementById('landArea').value;
     const buildRatio = +document.getElementById('buildRatio').value;
     const buildPercent = +document.getElementById('buildPercent').value / 100;
@@ -147,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const indirectCost = +document.getElementById('indirectCostPercent').value / 100;
     const riskPercent = +document.getElementById('riskPercent').value / 100;
     const projectDuration = +document.getElementById('projectDuration').value;
-
     const directCapCost = +document.getElementById('directCapCost').value;
     const capMode = getCurrentCapMode();
     const buildingAreas = landArea * buildRatio;
@@ -160,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
       constructionCost * (1 + engSupervision + indirectCost + riskPercent);
     const totalCapCost = capMode === 'detailed' ? detailedCap : directCapCost;
     const devCostPerYear = projectDuration > 0 ? totalCapCost / projectDuration : totalCapCost;
-
     const totalIncome = +document.getElementById('totalIncome').value;
     const incomeGrowthPercent = +document.getElementById('incomeGrowthPercent').value / 100;
     const netIncomePercent = +document.getElementById('netIncomePercent').value / 100;
@@ -174,11 +168,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loanType = loanTypeSelect.value;
     const balloonFinalPayment = loanType === 'balloon' ? getBalloonFinalPayment(totalCapCost * loanToValue) : 0;
     const loanGrace = +loanGraceInput.value;
-
     const loanAmount = totalCapCost * loanToValue;
     const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType, balloonFinalPayment, loanGrace);
     const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years, balloonFinalPayment, loanGrace);
-
     let rows = [];
     let reachedFullIncome = false;
     const fullFreeYears = Math.floor(freePeriod);
@@ -199,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let breakEvenMonth = null;
     let breakEvenDay = null;
     let breakEvenIdx = null;
-
     for (let i = 1; i <= years; i++) {
       if (i < firstIncomeYear) {
         yearIncome = 0;
@@ -214,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         yearIncome = yearIncome * (1 + incomeGrowthPercent);
       }
-
       if (i <= fullFreeYears) {
         annualRent = 0;
       } else if (i === fullFreeYears + 1 && fractionalFree > 0) {
@@ -228,18 +218,15 @@ document.addEventListener('DOMContentLoaded', function() {
           rentYearBase *= (1 + rentIncreasePercent);
         }
       }
-
       let netIncome = yearIncome * netIncomePercent;
       let devCostThisYear = (i <= projectDuration) ? devCostPerYear : 0;
       let debtPayment = debtSchedule[i - 1] || 0;
       let cashflow = netIncome - annualRent - devCostThisYear;
       let cashflowAfterDebt = cashflow - debtPayment;
-
       cumulativeCashflow += cashflow;
       cumulativeCashflowAfterDebt += cashflowAfterDebt;
       npv += cashflow / Math.pow(1 + discountRate, i);
       npvAfterDebt += cashflowAfterDebt / Math.pow(1 + discountRate, i);
-
       sumYearIncome += yearIncome;
       sumNetIncome += netIncome;
       sumAnnualRent += annualRent;
@@ -247,10 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
       sumCashflow += cashflow;
       sumCashflowAfterDebt += cashflowAfterDebt;
       totalContractRent += annualRent;
-
       cashflows.push(cashflow);
       cashflowsAfterDebt.push(cashflowAfterDebt);
-
       if (breakEvenIdx == null && cumulativeCashflow >= -1 && cumulativeCashflow <= 1) {
         breakEvenIdx = i;
       } else if (breakEvenIdx == null && cumulativeCashflow > 0 && rows.length > 0 && rows[rows.length-1].cumulativeCashflow < 0) {
@@ -264,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
         breakEvenDay = Math.round((fullDays % 365) % 30.4375);
         breakEvenIdx = i;
       }
-
       rows.push({
         year: i,
         yearIncome: yearIncome,
@@ -278,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
         cumulativeCashflowAfterDebt: cumulativeCashflowAfterDebt
       });
     }
-
     let breakEvenText = '';
     if (breakEvenIdx != null && breakEvenYear != null) {
       breakEvenText = `${breakEvenYear} سنة و${breakEvenMonth} شهر و${breakEvenDay} يوم`;
@@ -287,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       breakEvenText = 'لم تتحقق نقطة التعادل';
     }
-
     return {
       buildingAreas,
       siteArea,
@@ -316,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
       totalCapCost
     };
   }
-
   function findMaxRentValue() {
     let lo = 0, hi = 1e8, best = 0;
     let tolerance = 1.0;
@@ -367,14 +348,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let rentVal = sliderRentValOverride !== null
       ? sliderRentValOverride
       : +document.getElementById('annualRent').value;
-
     const results = financials(rentVal);
-
     buildingAreasSpan.textContent = numberFormat(results.buildingAreas);
     siteAreaSpan.textContent = numberFormat(results.siteArea);
     constructionCostSpan.textContent = numberFormat(results.constructionCost);
     totalCapCostSpan.textContent = numberFormat(results.totalCapCost);
-
     totalDevCostSpan.textContent = numberFormat(results.totalDevCost);
     totalContractRentSpan.textContent = numberFormat(results.totals.totalContractRent);
     avgAnnualRentSpan.textContent = numberFormat(results.totals.avgAnnualRent);
@@ -385,14 +363,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let irr = computeIRR(results.cashflows, results.totalDevCost);
     irrResultSpan.textContent = (irr !== null && isFinite(irr)) ? irr.toFixed(2) : "غير متحقق";
     breakEvenPointSpan.textContent = results.breakEvenText;
-
     loanAmountSpan.textContent = numberFormat(results.loanAmount);
     annualDebtServiceSpan.textContent = numberFormat(results.annualDebtService);
     netCashflowAfterDebtSpan.textContent = numberFormat(results.sumCashflowAfterDebt);
     npvAfterDebtSpan.textContent = numberFormat(results.npvAfterDebt);
     let irrAfterDebt = computeIRR(results.cashflowsAfterDebt, results.totalDevCost - results.loanAmount);
     irrAfterDebtSpan.textContent = (irrAfterDebt !== null && isFinite(irrAfterDebt)) ? irrAfterDebt.toFixed(2) : "غير متحقق";
-
     let tableHtml = `
       <table>
         <thead>
@@ -462,11 +438,9 @@ document.addEventListener('DOMContentLoaded', function() {
   balloonValueInput.addEventListener('input', updateSliderAndResults);
   balloonTypeSelect.addEventListener('change', updateSliderAndResults);
   loanGraceInput.addEventListener('input', updateSliderAndResults);
-
   updateCapVisibility();
   updateBalloonVisibility();
   updateSliderAndResults();
-
   document.getElementById('exportPDF').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -497,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
         done();
       });
     };
-
     let i = 0;
     function next() {
       if (i < reportSections.length) {
