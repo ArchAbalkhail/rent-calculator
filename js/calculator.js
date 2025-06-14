@@ -1,115 +1,109 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // ... [نفس المتغيرات السابقة]
-  const capModeRadios = document.getElementsByName('capCostMode');
-  const capDetailsDiv = document.getElementById('cap-details');
-  const capDirectDiv = document.getElementById('cap-direct');
-  const directCapCostInput = document.getElementById('directCapCost');
+// ... جميع التعريفات نفسها ...
 
-  // خيارات القرض balloon
-  const loanTypeSelect = document.getElementById('loanType');
-  const balloonOptionsDiv = document.getElementById('balloon-options');
-  const balloonValueInput = document.getElementById('balloonValue');
-  const balloonTypeSelect = document.getElementById('balloonType');
-  const loanGraceInput = document.getElementById('loanGrace');
-
-  function getCurrentCapMode() {
-    let mode = 'detailed';
-    capModeRadios.forEach(r => { if (r.checked) mode = r.value; });
-    return mode;
+function getBalloonFinalPayment(loanAmount) {
+  const balloonType = balloonTypeSelect.value;
+  const balloonValue = +balloonValueInput.value;
+  if (balloonType === 'percent') {
+    return loanAmount * (balloonValue / 100);
   }
-  function updateCapVisibility() {
-    const mode = getCurrentCapMode();
-    capDetailsDiv.classList.toggle('hidden', mode !== 'detailed');
-    capDirectDiv.classList.toggle('hidden', mode !== 'direct');
-  }
-  function updateBalloonVisibility() {
-    balloonOptionsDiv.classList.toggle('hidden', loanTypeSelect.value !== 'balloon');
-  }
-  loanTypeSelect.addEventListener('change', () => {
-    updateBalloonVisibility();
-    updateSliderAndResults();
-  });
-  capModeRadios.forEach(r => r.addEventListener('change', () => {
-    updateCapVisibility();
-    updateSliderAndResults();
-  }));
+  return balloonValue;
+}
 
-  // ... [دوال المساعدة كما في الكود السابق]
-
-  function getBalloonFinalPayment(loanAmount) {
-    const balloonType = balloonTypeSelect.value;
-    const balloonValue = +balloonValueInput.value;
-    if (balloonType === 'percent') {
-      return loanAmount * (balloonValue / 100);
-    }
-    return balloonValue;
-  }
-
-  function loanDebtSchedule(amount, annualRate, years, type, totalYears, balloonFinalPayment, graceYears) {
-    let debtPayments = Array(totalYears).fill(0);
-    let mainYears = years - graceYears;
-    if (mainYears < 1) mainYears = 1;
-    if (type === 'equalInstallments') {
-      let pmt = loanAnnualPayment(amount, annualRate, years, type);
-      for (let i = 0; i < totalYears; i++) {
-        if (i < graceYears) {
-          debtPayments[i] = 0;
-        } else if (i < years) {
-          debtPayments[i] = pmt;
+// الدالة التالية تصحح طريقة الحساب في حالة balloon مع فترة سماح:
+function loanDebtSchedule(amount, annualRate, years, type, totalYears, balloonFinalPayment, graceYears) {
+  let debtPayments = Array(totalYears).fill(0);
+  let interestPayments = Array(totalYears).fill(0);
+  let principalPayments = Array(totalYears).fill(0);
+  if (type === 'equalInstallments') {
+    let r = annualRate / 100;
+    let n = years;
+    let pmt = (r === 0) ? amount / n : amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    for (let i = 0; i < totalYears; i++) {
+      if (i < graceYears) {
+        debtPayments[i] = 0;
+        interestPayments[i] = 0;
+        principalPayments[i] = 0;
+      } else if (i < years) {
+        // حساب الرصيد المتبقي
+        let prevBalance = amount;
+        for (let j = graceYears; j < i; j++) {
+          let intP = prevBalance * r;
+          let princP = pmt - intP;
+          prevBalance -= princP;
         }
-      }
-    } else if (type === 'balloon') {
-      let balloon = balloonFinalPayment;
-      let principalToAmortize = amount - balloon;
-      let r = annualRate / 100;
-      let n = mainYears;
-      let pmt = n > 0 ? (principalToAmortize * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : 0;
-      for (let i = 0; i < totalYears; i++) {
-        if (i < graceYears) {
-          debtPayments[i] = 0;
-        } else if (i < years - 1) {
-          debtPayments[i] = pmt;
-        } else if (i === years - 1) {
-          debtPayments[i] = pmt + balloon;
-        }
+        let interest = prevBalance * r;
+        let principal = pmt - interest;
+        debtPayments[i] = pmt;
+        interestPayments[i] = interest;
+        principalPayments[i] = principal;
       }
     }
-    return debtPayments;
-  }
-  function loanAnnualPayment(amount, annualRate, years, type, balloonFinalPayment = 0, graceYears = 0) {
-    let mainYears = years - graceYears;
-    if (mainYears < 1) mainYears = 1;
-    if (type === 'equalInstallments') {
-      if (annualRate === 0) return amount / years;
-      const r = annualRate / 100;
-      const n = years;
-      const pmt = amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-      return pmt;
-    } else if (type === 'balloon') {
-      let balloon = balloonFinalPayment;
-      let principalToAmortize = amount - balloon;
-      let r = annualRate / 100;
-      let n = mainYears;
-      if (n <= 0) n = 1;
-      let pmt = n > 0 ? (principalToAmortize * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : 0;
-      return pmt;
+  } else if (type === 'balloon') {
+    // القسط السنوي = (المبلغ الأصلي - الدفعة الأخيرة) / عدد سنوات السداد بعد السماح
+    let n = years - graceYears;
+    if (n < 1) n = 1;
+    let balloon = balloonFinalPayment;
+    let principalToAmortize = amount - balloon;
+    let yearlyPrincipal = (n > 1) ? principalToAmortize / n : principalToAmortize;
+
+    let balance = amount;
+    for (let i = 0; i < totalYears; i++) {
+      if (i < graceYears) {
+        debtPayments[i] = 0;
+        interestPayments[i] = 0;
+        principalPayments[i] = 0;
+      } else if (i < years - 1) {
+        let interest = balance * (annualRate / 100);
+        debtPayments[i] = yearlyPrincipal + interest;
+        interestPayments[i] = interest;
+        principalPayments[i] = yearlyPrincipal;
+        balance -= yearlyPrincipal;
+      } else if (i === years - 1) {
+        // السنة الأخيرة: الدفعة الأخيرة + آخر قسط رئيسي + الفائدة
+        let interest = balance * (annualRate / 100);
+        debtPayments[i] = yearlyPrincipal + balloon + interest;
+        interestPayments[i] = interest;
+        principalPayments[i] = yearlyPrincipal + balloon;
+        balance = 0;
+      }
     }
-    return 0;
   }
+  // الدالة تُعيد فقط مجمل السداد السنوي، لكن يمكن تعديلها للإرجاع التفصيلي إذا أردت (interestPayments, principalPayments)
+  return debtPayments;
+}
 
-  // ... [دالة financials, updateResults, updateSliderAndResults, إلخ كما في الكود السابق مع تحديث القرض ليعمل مع balloon/grace]
+function loanAnnualPayment(amount, annualRate, years, type, balloonFinalPayment = 0, graceYears = 0) {
+  if (type === 'equalInstallments') {
+    if (annualRate === 0) return amount / years;
+    const r = annualRate / 100;
+    const n = years;
+    return amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  } else if (type === 'balloon') {
+    let n = years - graceYears;
+    if (n < 1) n = 1;
+    let balloon = balloonFinalPayment;
+    let principalToAmortize = amount - balloon;
+    return (n > 1) ? principalToAmortize / n : principalToAmortize;
+  }
+  return 0;
+}
 
-  // الربط مع جميع المدخلات
-  inputs.forEach(i => i.addEventListener('input', updateSliderAndResults));
-  maxRentSlider.addEventListener('input', updateUIFromSlider);
-  directCapCostInput.addEventListener('input', updateSliderAndResults);
-  balloonValueInput.addEventListener('input', updateSliderAndResults);
-  balloonTypeSelect.addEventListener('change', updateSliderAndResults);
-  loanGraceInput.addEventListener('input', updateSliderAndResults);
+// ... في دالة financials استدعي loanDebtSchedule بنفس الطريقة مع المتغيرات الجديدة ...
 
-  updateCapVisibility();
+// مثال الاستدعاء الصحيح:
+const balloonFinalPayment = loanType === 'balloon' ? getBalloonFinalPayment(loanAmount) : 0;
+const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType, balloonFinalPayment, loanGrace);
+const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years, balloonFinalPayment, loanGrace);
+
+// ... بقية الكود كما هو ...
+
+// تأكد من ربط الأحداث:
+loanTypeSelect.addEventListener('change', () => {
   updateBalloonVisibility();
   updateSliderAndResults();
-
-  // ... [زر التصدير PDF كما هو]
 });
+balloonValueInput.addEventListener('input', updateSliderAndResults);
+balloonTypeSelect.addEventListener('change', updateSliderAndResults);
+loanGraceInput.addEventListener('input', updateSliderAndResults);
+
+// ... بقية الكود كما هو ...
