@@ -9,16 +9,11 @@ body {
   unicode-bidi: plaintext;
 }
 
-.container-main {
-  max-width: 950px;
-  margin: 0 auto 35px auto;
-  padding: 0 10px;
-}
 h1 {
   text-align: center;
   margin: 32px 0 10px 0;
   color: #23408e;
-  font-size: 2.2rem;
+  font-size: 2.3rem;
   font-weight: 900;
   letter-spacing: 0.7px;
   background-image: linear-gradient(90deg, #23408e 40%, #3a91e8 100%);
@@ -41,70 +36,19 @@ h1 {
   padding-bottom: 10px;
 }
 
-/* خطوات النماذج */
-#wizard-steps {
-  margin: 0 auto 25px auto;
-  max-width: 750px;
-}
-.wizard-progress {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 2px;
-}
-.wizard-step {
-  flex: 1;
-  background: #e6ecf8;
-  color: #23408e;
-  padding: 8px 0;
-  border-radius: 10px 10px 0 0;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  font-size: 1.08em;
-  position: relative;
-  transition: background 0.18s, color 0.18s;
-}
-.wizard-step.active,
-.wizard-step.done {
-  background: #23408e;
-  color: #fff;
-}
-.wizard-step span {
-  display: inline-block;
-  background: #fff;
-  color: #23408e;
-  font-weight: bold;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  margin-left: 7px;
-  font-size: 1.05em;
-  line-height: 27px;
-  vertical-align: middle;
-}
-.wizard-step.active span,
-.wizard-step.done span {
-  background: #3a91e8;
-  color: #fff;
-}
-.wizard-card {
+.card {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 24px 0 #4b6cb73a;
-  margin: 0 auto 24px auto;
+  margin: 22px auto 28px auto;
   padding: 30px 34px 18px 34px;
   max-width: 700px;
   transition: box-shadow 0.2s;
   position: relative;
   overflow: hidden;
-  display: none;
-  animation: showResults 0.55s cubic-bezier(.49,1.73,.72,.88);
 }
-.wizard-card.active {
-  display: block;
-}
-.wizard-card h2 {
+
+.card h2 {
   margin-top: 0;
   font-size: 1.32rem;
   color: #23408e;
@@ -115,62 +59,7 @@ h1 {
   margin-bottom: 18px;
   letter-spacing: 0.1px;
 }
-.form-row {
-  margin-bottom: 9px;
-}
-.radio-row label {
-  margin-right: 18px;
-  font-weight: 500;
-  font-size: 1em;
-}
-label {
-  display: block;
-  margin: 13px 0 4px 0;
-  font-weight: 500;
-  color: #2c3e50;
-  font-size: 1.08em;
-  letter-spacing: 0.1px;
-}
-input[type="number"],
-select {
-  font-size: 1.11em;
-  padding: 9px 11px;
-  border-radius: 8px;
-  border: 1.3px solid #dbe6f8;
-  margin-top: 4px;
-  margin-bottom: 7px;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-  background: #f7faff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 2px #e9f1fd;
-  font-variant-numeric: normal;
-  unicode-bidi: plaintext;
-  direction: ltr;
-}
-input[type="number"]:focus,
-select:focus {
-  border-color: #3a91e8;
-  box-shadow: 0 0 6px 0 #54a0ff44;
-  background: #f3f7fa;
-}
-input[type="range"] {
-  width: 190px;
-  accent-color: #23408e;
-  direction: ltr;
-  unicode-bidi: plaintext;
-}
-.inline-flex {
-  display: flex;
-  gap: 8px;
-}
-.tip {
-  display: block;
-  color: #7a7a7a;
-  font-size: 0.97em;
-  margin-bottom: 6px;
-}
+
 .section-sub-title {
   color: #555;
   font-size: 1.01em;
@@ -182,6 +71,50 @@ input[type="range"] {
   border-radius: 10px;
   padding: 10px 12px;
 }
+
+label {
+  display: block;
+  margin: 16px 0 7px 0;
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 1.09em;
+  letter-spacing: 0.1px;
+}
+
+input[type="number"],
+select {
+  font-size: 1.11em;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1.5px solid #dbe6f8;
+  margin-top: 4px;
+  margin-bottom: 14px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f7faff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px #e9f1fd;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-variant-numeric: normal;
+  unicode-bidi: plaintext;
+  direction: ltr;
+}
+
+input[type="number"]:focus,
+select:focus {
+  border-color: #3a91e8;
+  box-shadow: 0 0 6px 0 #54a0ff44;
+  background: #f3f7fa;
+}
+
+input[type="range"] {
+  width: 190px;
+  accent-color: #23408e;
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
 .inline-stats {
   display: flex;
   justify-content: space-between;
@@ -191,42 +124,16 @@ input[type="range"] {
   font-size: 1.08em;
   color: #555;
   gap: 16px;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-variant-numeric: normal;
+  unicode-bidi: plaintext;
 }
+
 .inline-stats span {
   flex: 1;
   text-align: center;
 }
 
-/* أزرار الخطوات */
-.wizard-btns {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin: 25px 0 0 0;
-}
-.btn-next, .btn-prev, .btn-calc {
-  background: linear-gradient(90deg, #23408e 60%, #3a91e8 100%);
-  color: #fff;
-  font-weight: 700;
-  padding: 9px 24px;
-  border: none;
-  border-radius: 9px;
-  font-size: 1.12em;
-  cursor: pointer;
-  transition: background 0.22s, box-shadow 0.18s, transform 0.13s;
-  letter-spacing: 0.1px;
-  box-shadow: 0 2px 8px #0001;
-}
-.btn-calc {
-  background: linear-gradient(91deg, #1a9c5a 60%, #3a91e8 100%);
-}
-.btn-next:hover, .btn-prev:hover, .btn-calc:hover {
-  background: linear-gradient(92deg, #1a2330 60%, #23408e 100%);
-  box-shadow: 0 4px 15px #23408e15;
-  transform: translateY(-2px) scale(1.025);
-}
-
-/* النتائج */
 .results {
   background: #fff;
   border-radius: 18px;
@@ -235,38 +142,43 @@ input[type="range"] {
   padding: 28px 38px 20px 38px;
   max-width: 830px;
   animation: showResults 0.7s cubic-bezier(.49,1.73,.72,.88);
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
   font-variant-numeric: normal;
   unicode-bidi: plaintext;
 }
-.results.hidden { display: none; }
+
+@keyframes showResults {
+  from { opacity: 0; transform: translateY(50px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+
 .results h2 {
   color: #23408e;
   letter-spacing: 0.5px;
   font-weight: 700;
   margin-bottom: 20px;
   text-shadow: 0 1px 4px #54a0ff17;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 1.25em;
 }
-.results-rows {
-  margin-bottom: 18px;
-}
+
 .result-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 11px 0 12px 0;
   border-bottom: 1px solid #eff1f3;
-  font-size: 1.13em;
+  font-size: 1.14em;
   font-weight: 500;
   transition: background 0.13s;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
+  font-variant-numeric: normal;
+  unicode-bidi: plaintext;
   direction: rtl;
 }
+
 .result-row:hover {
   background: #f7faff;
 }
+
 .result-row:last-child { border-bottom: none; }
 .result-label { color: #23408e; font-weight: 500; }
 .break-even { color: #e67e22; font-weight: bold; }
@@ -286,64 +198,31 @@ input[type="range"] {
   font-size: 1.08em;
   direction: ltr;
   unicode-bidi: plaintext;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
 }
-.results-btns {
-  margin-top: 28px;
-  display: flex;
-  gap: 18px;
-  justify-content: flex-end;
-}
-#exportPDF, #resetAll {
+
+button#exportPDF {
+  display: block;
+  margin: 30px auto 0 auto;
   background: linear-gradient(90deg, #23408e 60%, #3a91e8 100%);
   color: #fff;
   font-weight: 700;
-  padding: 11px 26px;
+  padding: 13px 36px;
   border: none;
   border-radius: 12px;
-  font-size: 1.11em;
-  box-shadow: 0 2px 12px #0001;
+  font-size: 1.19em;
+  box-shadow: 0 2px 12px #0002;
   cursor: pointer;
   transition: background 0.22s, box-shadow 0.18s, transform 0.15s;
-  letter-spacing: 0.19px;
-  margin-left: 8px;
+  letter-spacing: 0.2px;
 }
-#exportPDF:hover, #resetAll:hover {
+
+button#exportPDF:hover {
   background: linear-gradient(92deg, #1a2330 60%, #23408e 100%);
   box-shadow: 0 4px 22px #23408e15;
   transform: translateY(-2px) scale(1.025);
 }
-.summary-explain {
-  color: #1a5aad;
-  background: #f7faff;
-  border-radius: 8px;
-  padding: 12px 10px;
-  font-size: 1.04em;
-  margin-bottom: 14px;
-  text-align: center;
-  line-height: 1.7;
-}
-.result-alert {
-  color: #e74c3c;
-  font-size: 1.01em;
-  margin-top: 8px;
-  text-align: center;
-}
-#cashflow-section {
-  margin-top: 25px;
-}
-#cashflowChart {
-  max-width: 700px;
-  margin: 0 auto 24px auto;
-  display: block;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px #00000011;
-  padding: 5px 0 0 0;
-}
-#cashflowTable {
-  margin-top: 18px;
-  overflow-x: auto;
-}
+
 table {
   direction: rtl;
   width: 100%;
@@ -353,12 +232,15 @@ table {
   border-radius: 12px;
   overflow: hidden;
   font-size: 1.04em;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
   font-variant-numeric: normal;
   unicode-bidi: plaintext;
 }
+
 th, td {
   text-align: center;
   padding: 12px 4px;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
   font-variant-numeric: normal;
   unicode-bidi: plaintext;
   direction: rtl;
@@ -376,7 +258,6 @@ tr:nth-child(even) td {
 .cashflow-positive { color: #198754; }
 .cashflow-negative { color: #e74c3c; }
 
-/* القسم الختامي */
 .footer-section {
   background: #f7faff;
   margin: 40px auto 0 auto;
@@ -385,6 +266,7 @@ tr:nth-child(even) td {
   border-radius: 14px;
   box-shadow: 0 2px 10px #0001;
   max-width: 600px;
+  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
   font-variant-numeric: normal;
   unicode-bidi: plaintext;
 }
@@ -429,15 +311,15 @@ tr:nth-child(even) td {
 }
 
 @media (max-width: 950px) {
-  .card, .results, .wizard-card { padding: 14px 5vw; max-width: 99vw; }
+  .card, .results { padding: 14px 5vw; max-width: 99vw; }
   h1 { font-size: 1.45rem; }
   .footer-section { padding: 14px 2vw 7px 2vw; }
 }
+
 @media (max-width: 600px) {
-  .card, .results, .wizard-card { padding: 10px 2vw; }
+  .card, .results { padding: 10px 2vw; }
   .footer-social a { font-size: 1.25em; }
   table, th, td { font-size: 0.98em; }
   .inline-stats { flex-direction: column; gap: 10px; }
   .slider-container { flex-direction: column; gap: 7px; }
-  .wizard-progress { font-size: 0.97em; }
 }
