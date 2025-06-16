@@ -56,7 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }));
 
   function numberFormat(n) {
-    return Number(n).toLocaleString('ar-EG', {maximumFractionDigits: 0});
+    // دائمًا أرقام إنجليزية
+    if (typeof n === "number") {
+      return n.toLocaleString('en-US', {maximumFractionDigits: 0});
+    } else if (typeof n === "string" && n.trim() !== "" && !isNaN(Number(n))) {
+      return Number(n).toLocaleString('en-US', {maximumFractionDigits: 0});
+    }
+    return n;
   }
   function getFreePeriodInYears() {
     const years = +document.getElementById('years').value;
