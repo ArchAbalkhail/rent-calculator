@@ -1,291 +1,176 @@
-body {
-  background: linear-gradient(120deg, #f7faff 0%, #e9f1fd 100%);
-  font-family: 'Cairo', 'Tajawal', Arial, sans-serif;
-  color: #1a2330;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نموذج مالي للوصول إلى القيمة التأجيرية المناسبة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <h1 style="margin-bottom:10px;">نموذج مالي للوصول إلى القيمة التأجيرية المناسبة</h1>
+  <div class="sub-title">
+    يهدف هذا النموذج المالي إلى مساعدة المستثمر الراغب باستئجار عقار محدد لغرض التوسع في مشروع ما مدر للدخل بتحديد أعلى قيمة تأجيرية يمكن دفعها دون التأثير على ربحية المشروع وذلك من خلال مبدأ خصم صافي الدفقات النقدية للمشروع DCF بمعدل الخصم المستهدف وذلك للوصول إلى صافي القيمة الحالية NPV ويتم التحكم بالقيمة التأجيرية من خلال المزلاج في النتائج بالزيادة والنقصان لمعرفة تأثير قيمة الاستئجار على ربحية المشروع ، تم تصميم المزلاج ليكون سقف أعلى قيمة تأجيرية يمكن دفعها هو ما يجعل صافي القيمة الحالية للمشروع NPV صفر
+  </div>
+  <form id="calc-form">
+    <div class="card">
+      <h2>معلومات عقد الاستئجار</h2>
+      <label>عدد السنوات
+        <input type="number" id="years" min="1" max="100" value="20">
+      </label>
+      <label>
+        فترة السماح غير مدفوعة
+        <span class="inline-flex">
+          <input type="number" id="freePeriodValue" min="0" step="any" value="2">
+          <select id="freePeriodUnit">
+            <option value="years">سنة/سنوات</option>
+            <option value="months">شهر/شهور</option>
+            <option value="days">يوم/أيام</option>
+            <option value="percent">نسبة مئوية من مدة العقد</option>
+          </select>
+        </span>
+      </label>
+      <label>نسبة الزيادة الإيجارية (%) <input type="number" id="rentIncreasePercent" min="0" value="5"></label>
+      <label>فترة الزيادة الإيجارية (بالسنوات) <input type="number" id="increaseCycle" min="1" max="10" value="2"></label>
+      <label>قيمة الأجرة السنوية (ريال) <input type="number" id="annualRent" min="0" step="1000" value="200000"></label>
+    </div>
 
-h1 {
-  text-align: center;
-  margin: 32px 0 10px 0;
-  color: #23408e;
-  font-size: 2.3rem;
-  font-weight: 900;
-  letter-spacing: 0.7px;
-  background-image: linear-gradient(90deg, #23408e 40%, #3a91e8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-          background-clip: text;
-          text-fill-color: transparent;
-}
+    <div class="card">
+      <h2>معلومات التكاليف الرأسمالية للمشروع</h2>
+      <div class="section-sub-title">
+        سيتم استخدام الناتج من هذا القسم لتحديد اجمالي التكاليف الرأسمالية التي سيتم دفعها على المشروع ويمكن استخدام المدخلات بشكل تفصيلي للمساعدة في الوصول إلى الإجمالي أو يمكن اختيار الإدخال المباشر لوضع اجمالي التكاليف في حال تم احتسابها بشكل منفصل
+      </div>
+      <div>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="detailed" checked> حساب تفصيلي
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="capCostMode" value="direct"> إدخال مباشر
+        </label>
+      </div>
+      <div id="cap-details">
+        <label>مساحة الأرض (م²) <input type="number" id="landArea" min="0" value="1000"></label>
+        <label>معامل البناء <input type="number" id="buildRatio" step="0.01" min="0" value="2"></label>
+        <label>نسبة البناء (%) <input type="number" id="buildPercent" min="0" max="100" value="70"></label>
+        <label>تكاليف البناء (ريال/م²) <input type="number" id="buildCost" min="0" value="2000"></label>
+        <label>تكاليف الموقع العام (ريال/م²) <input type="number" id="siteCost" min="0" value="150"></label>
+        <label>تكاليف القبو (ريال/م²) <input type="number" id="basementCost" min="0" value="500"></label>
+        <label>تكاليف الإشراف الهندسي (%) <input type="number" id="engSupervisionPercent" min="0" value="5"></label>
+        <label>تكاليف غير مباشرة (%) <input type="number" id="indirectCostPercent" min="0" value="7"></label>
+        <label>مخاطر ارتفاع الأسعار (%) <input type="number" id="riskPercent" min="0" value="10"></label>
+        <label>المدة الزمنية للمشروع (بالسنوات) <input type="number" id="projectDuration" min="1" value="2"></label>
+        <div class="inline-stats">
+          <span><span class="inline-stat-label">مسطحات البناء:</span> <span id="buildingAreas"></span> م²</span>
+          <span><span class="inline-stat-label">الموقع العام:</span> <span id="siteArea"></span> م²</span>
+          <span><span class="inline-stat-label">تكاليف الإنشاء:</span> <span id="constructionCost"></span> ريال</span>
+        </div>
+      </div>
+      <div id="cap-direct" class="hidden">
+        <label>إجمالي التكاليف الرأسمالية (مباشر) <input type="number" id="directCapCost" min="0" value="5000000"></label>
+      </div>
+      <div style="margin-top: 10px;">
+        <b>إجمالي التكاليف الرأسمالية:</b>
+        <span id="totalCapCost" style="font-weight: bold; color:#0055aa"></span> ريال
+      </div>
+    </div>
 
-.sub-title {
-  color: #444;
-  font-size: 1.09em;
-  font-weight: 500;
-  margin: 0 0 22px 0;
-  text-align: center;
-  line-height: 1.7;
-  max-width: 900px;
-  margin-right: auto;
-  margin-left: auto;
-  padding-bottom: 10px;
-}
+    <div class="card">
+      <h2>خيارات التمويل (القرض)</h2>
+      <div class="section-sub-title">
+        في حال عدم وجود تمويل في المشروع يمكن إدخال قيمة 0 (صفر) في خانة نسبة القرض إلى رأس المال ، ويجدر الانتباه إلى أنه لا يمكن أن تتجاوز مدة القرض عدد سنوات العقد
+      </div>
+      <label>نسبة القرض إلى رأس المال (%) <input type="number" id="loanToValue" min="0" max="100" value="60"></label>
+      <label>مدة القرض (سنة) <input type="number" id="loanYears" min="1" max="50" value="10"></label>
+      <label>نسبة الفائدة السنوية (%) <input type="number" id="interestRate" min="0" max="100" step="0.01" value="6"></label>
+      <label>فترة السماح لبدء السداد (سنوات) <input type="number" id="loanGrace" min="0" max="20" value="0"></label>
+      <label>
+        طريقة السداد
+        <select id="loanType">
+          <option value="equalInstallments">دفعات متساوية</option>
+          <option value="balloon">دفعات مع دفعة أخيرة</option>
+        </select>
+      </label>
+      <div id="balloon-options" class="hidden" style="margin-top: 8px;">
+        <span class="inline-group">
+          <span>الدفعة الأخيرة:</span>
+          <input type="number" id="balloonValue" min="0" value="0" style="width: 90px;">
+          <select id="balloonType">
+            <option value="amount">ريال</option>
+            <option value="percent">نسبة من القرض %</option>
+          </select>
+        </span>
+      </div>
+    </div>
 
-.card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px 0 #4b6cb73a;
-  margin: 22px auto 28px auto;
-  padding: 30px 34px 18px 34px;
-  max-width: 700px;
-  transition: box-shadow 0.2s;
-  position: relative;
-  overflow: hidden;
-}
+    <div class="card">
+      <h2>معلومات الدخل</h2>
+      <label>إجمالي الدخل (ريال سنوي) <input type="number" id="totalIncome" min="0" value="5000000"></label>
+      <label>نسبة النمو السنوي لإجمالي الدخل (%) <input type="number" id="incomeGrowthPercent" min="0" value="2"></label>
+      <label>نسبة صافي الدخل (%) <input type="number" id="netIncomePercent" min="0" value="85"></label>
+      <label>السنوات اللازمة لبدء سريان الدخل <input type="number" id="incomeStartYears" min="0" value="2"></label>
+      <label>نسبة النمو للوصول إلى اجمالي الدخل (%) <input type="number" id="targetGrowthPercent" min="0" value="50"></label>
+      <label>نسبة بداية الدخل من اجمالي الدخل (%) <input type="number" id="startIncomePercent" min="0" max="100" value="50"></label>
+    </div>
 
-.card h2 {
-  margin-top: 0;
-  font-size: 1.32rem;
-  color: #23408e;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  letter-spacing: 0.1px;
-}
+    <div class="card">
+      <h2>الخصم (معدل الرسملة / تكلفة رأس المال)</h2>
+      <div class="section-sub-title">
+        سيتم استخدام هذه النسبة في حساب صافي القيمة الحالية NPV
+      </div>
+      <label>معدل الرسملة (تكلفة رأس المال) (%) <input type="number" id="discountRate" min="0" step="0.01" value="10"></label>
+    </div>
+  </form>
 
-.section-sub-title {
-  color: #555;
-  font-size: 1.01em;
-  font-weight: 400;
-  margin-bottom: 18px;
-  margin-top: -10px;
-  line-height: 1.7;
-  background: #f7faff;
-  border-radius: 10px;
-  padding: 10px 12px;
-}
+  <div class="results" id="results">
+    <h2>النتائج</h2>
+    <div class="result-row"><span class="result-label">إجمالي التكاليف الرأسمالية:</span> <span id="totalDevCost"></span> ريال</div>
+    <div class="result-row"><span class="result-label">إجمالي قيمة عقد الإيجار:</span> <span id="totalContractRent"></span> ريال</div>
+    <div class="result-row"><span class="result-label">متوسط الأجرة السنوية:</span> <span id="avgAnnualRent"></span> ريال</div>
+    <div class="result-row"><span class="result-label">متوسط إجمالي الدخل السنوي:</span> <span id="avgYearIncome"></span> ريال</div>
+    <div class="result-row"><span class="result-label">متوسط صافي الدخل السنوي:</span> <span id="avgNetIncome"></span> ريال</div>
+    <div class="result-row"><span class="result-label">إجمالي صافي التدفقات النقدية:</span> <span id="totalCashflow"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي القيمة الحالية (NPV):</span> <span id="npvResult"></span> ريال</div>
+    <div class="result-row"><span class="result-label">معدل العائد الداخلي (IRR):</span> <span id="irrResult"></span> %</div>
+    <div class="result-row"><span class="result-label">نقطة التعادل:</span> <span id="breakEvenPoint" class="break-even"></span></div>
+    <div class="result-row"><span class="result-label">مجموع التمويل (القرض):</span> <span id="loanAmount"></span> ريال</div>
+    <div class="result-row"><span class="result-label">خدمة الدين السنوية:</span> <span id="annualDebtService"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي التدفق النقدي بعد خدمة الدين:</span> <span id="netCashflowAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">صافي القيمة الحالية بعد الدين (NPV):</span> <span id="npvAfterDebt"></span> ريال</div>
+    <div class="result-row"><span class="result-label">معدل العائد الداخلي بعد الدين (IRR):</span> <span id="irrAfterDebt"></span> %</div>
+    <div class="slider-container">
+      <span class="slider-label-modern">أعلى قيمة تأجيرية يمكن دفعها:</span>
+      <input type="range" id="maxRentSlider" min="0" max="500000" step="100" value="200000">
+      <span id="sliderRentVal" class="slider-value"></span> ريال
+    </div>
+  </div>
+  
+  <button id="exportPDF">تصدير التقرير PDF</button>
+  
+  <div class="results" id="cashflow-section">
+    <h2>جدول التدفقات النقدية السنوية</h2>
+    <div id="cashflowTable"></div>
+  </div>
 
-label {
-  display: block;
-  margin: 16px 0 7px 0;
-  font-weight: 500;
-  color: #2c3e50;
-  font-size: 1.09em;
-  letter-spacing: 0.1px;
-}
+  <div id="error-messages" style="color: red; text-align: center; margin-top: 20px;"></div>
 
-input[type="number"],
-select {
-  font-size: 1.11em;
-  padding: 10px 12px;
-  border-radius: 9px;
-  border: 1.5px solid #dbe6f8;
-  margin-top: 4px;
-  margin-bottom: 14px;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-  background: #f7faff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 2px #e9f1fd;
-}
+  <!-- القسم الختامي -->
+  <div class="footer-section">
+    <div class="footer-note">
+      يجدر الانتباه إلى أن النتائج استرشادية ويوصى دائماً بالعمل مع الجهات المتخصصة
+    </div>
+    <div class="footer-rights">
+      جميع الحقوق محفوظة - 2025م
+    </div>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/abdulrahman-abalkhail/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+      <a href="https://x.com/archabalkhail" target="_blank" title="X (Twitter)"><i class="fab fa-x-twitter"></i></a>
+      <a href="https://wa.me/966552622141" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    </div>
+  </div>
 
-input[type="number"]:focus,
-select:focus {
-  border-color: #3a91e8;
-  box-shadow: 0 0 6px 0 #54a0ff44;
-  background: #f3f7fa;
-}
-
-input[type="range"] {
-  width: 190px;
-  accent-color: #23408e;
-}
-
-.inline-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 18px;
-  padding: 11px 0 0 0;
-  border-top: 1.5px solid #ececec;
-  font-size: 1.08em;
-  color: #555;
-  gap: 16px;
-}
-
-.inline-stats span {
-  flex: 1;
-  text-align: center;
-}
-
-.results {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 2px 18px #4b6cb74a;
-  margin: 32px auto 28px auto;
-  padding: 28px 38px 20px 38px;
-  max-width: 830px;
-  animation: showResults 0.7s cubic-bezier(.49,1.73,.72,.88);
-}
-
-@keyframes showResults {
-  from { opacity: 0; transform: translateY(50px);}
-  to   { opacity: 1; transform: translateY(0);}
-}
-
-.results h2 {
-  color: #23408e;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 0 1px 4px #54a0ff17;
-}
-
-.result-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 11px 0 12px 0;
-  border-bottom: 1px solid #eff1f3;
-  font-size: 1.14em;
-  font-weight: 500;
-  transition: background 0.13s;
-}
-
-.result-row:hover {
-  background: #f7faff;
-}
-
-.result-row:last-child { border-bottom: none; }
-.result-label { color: #23408e; font-weight: 500; }
-.break-even { color: #e67e22; font-weight: bold; }
-.slider-container {
-  margin-top: 25px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.slider-label-modern {
-  font-weight: 500;
-  color: #23408e;
-}
-.slider-value {
-  font-weight: bold;
-  color: #1a5aad;
-  font-size: 1.08em;
-}
-button#exportPDF {
-  display: block;
-  margin: 30px auto 0 auto;
-  background: linear-gradient(90deg, #23408e 60%, #3a91e8 100%);
-  color: #fff;
-  font-weight: 700;
-  padding: 13px 36px;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.19em;
-  box-shadow: 0 2px 12px #0002;
-  cursor: pointer;
-  transition: background 0.22s, box-shadow 0.18s, transform 0.15s;
-  letter-spacing: 0.2px;
-}
-
-button#exportPDF:hover {
-  background: linear-gradient(92deg, #1a2330 60%, #23408e 100%);
-  box-shadow: 0 4px 22px #23408e15;
-  transform: translateY(-2px) scale(1.025);
-}
-
-table {
-  direction: rtl;
-  width: 100%;
-  border-spacing: 0;
-  margin-top: 18px;
-  background: #f8f9fb;
-  border-radius: 12px;
-  overflow: hidden;
-  font-size: 1.04em;
-}
-
-th, td {
-  text-align: center;
-  padding: 12px 4px;
-}
-th {
-  background: #f0f4f8;
-  color: #23408e;
-  font-size: 1.10em;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-}
-tr:nth-child(even) td {
-  background: #f9fafb;
-}
-.cashflow-positive { color: #198754; }
-.cashflow-negative { color: #e74c3c; }
-
-.footer-section {
-  background: #f7faff;
-  margin: 40px auto 0 auto;
-  text-align: center;
-  padding: 28px 8px 10px 8px;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px #0001;
-  max-width: 600px;
-}
-.footer-section .footer-note {
-  color: #434343;
-  font-size: 1.08em;
-  margin-bottom: 8px;
-  font-weight: 500;
-  line-height: 1.7;
-}
-.footer-section .footer-rights {
-  color: #777;
-  font-size: 1em;
-  margin-bottom: 14px;
-}
-.footer-social {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-}
-.footer-social a {
-  color: #23408e;
-  font-size: 1.8em;
-  transition: color 0.2s, transform 0.2s;
-  display: inline-block;
-}
-.footer-social a:hover {
-  color: #3a91e8;
-  transform: scale(1.18) rotate(-8deg);
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  background: #f7faff;
-}
-::-webkit-scrollbar-thumb {
-  background: #e1eaf4;
-  border-radius: 8px;
-}
-
-@media (max-width: 950px) {
-  .card, .results { padding: 14px 5vw; max-width: 99vw; }
-  h1 { font-size: 1.45rem; }
-  .footer-section { padding: 14px 2vw 7px 2vw; }
-}
-
-@media (max-width: 600px) {
-  .card, .results { padding: 10px 2vw; }
-  .footer-social a { font-size: 1.25em; }
-  table, th, td { font-size: 0.98em; }
-  .inline-stats { flex-direction: column; gap: 10px; }
-  .slider-container { flex-direction: column; gap: 7px; }
-}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/calculator.js"></script>
+</body>
+</html>
