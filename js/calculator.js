@@ -1,226 +1,490 @@
-// ========== إعداد الـ Wizard ==========
-const steps = [...document.querySelectorAll('.wizard-card')];
-const stepTabs = [...document.querySelectorAll('.wizard-step')];
-let currentStep = 0;
+document.addEventListener('DOMContentLoaded', function() {
+  // ... تعريف المتغيرات للعناصر ...
+  const form = document.getElementById('calc-form');
+  const inputs = form.querySelectorAll('input,select');
+  const buildingAreasSpan = document.getElementById('buildingAreas');
+  const siteAreaSpan = document.getElementById('siteArea');
+  const constructionCostSpan = document.getElementById('constructionCost');
+  const totalCapCostSpan = document.getElementById('totalCapCost');
+  const totalDevCostSpan = document.getElementById('totalDevCost');
+  const totalContractRentSpan = document.getElementById('totalContractRent');
+  const avgAnnualRentSpan = document.getElementById('avgAnnualRent');
+  const avgYearIncomeSpan = document.getElementById('avgYearIncome');
+  const avgNetIncomeSpan = document.getElementById('avgNetIncome');
+  const totalCashflowSpan = document.getElementById('totalCashflow');
+  const npvResultSpan = document.getElementById('npvResult');
+  const irrResultSpan = document.getElementById('irrResult');
+  const breakEvenPointSpan = document.getElementById('breakEvenPoint');
+  const maxRentSlider = document.getElementById('maxRentSlider');
+  const sliderRentVal = document.getElementById('sliderRentVal');
+  const cashflowTableDiv = document.getElementById('cashflowTable');
+  const loanAmountSpan = document.getElementById('loanAmount');
+  const annualDebtServiceSpan = document.getElementById('annualDebtService');
+  const netCashflowAfterDebtSpan = document.getElementById('netCashflowAfterDebt');
+  const npvAfterDebtSpan = document.getElementById('npvAfterDebt');
+  const irrAfterDebtSpan = document.getElementById('irrAfterDebt');
+  const capModeRadios = document.getElementsByName('capCostMode');
+  const capDetailsDiv = document.getElementById('cap-details');
+  const capDirectDiv = document.getElementById('cap-direct');
+  const directCapCostInput = document.getElementById('directCapCost');
+  const loanTypeSelect = document.getElementById('loanType');
+  const balloonOptionsDiv = document.getElementById('balloon-options');
+  const balloonValueInput = document.getElementById('balloonValue');
+  const balloonTypeSelect = document.getElementById('balloonType');
+  const loanGraceInput = document.getElementById('loanGrace');
 
-function showStep(idx) {
-  steps.forEach((s,i) => s.classList.toggle('active', i===idx));
-  stepTabs.forEach((tab,i) => {
-    tab.classList.toggle('active', i===idx);
-    tab.classList.toggle('done', i<idx);
-  });
-  document.getElementById('results').classList.add('hidden');
-  document.getElementById('cashflow-section').classList.add('hidden');
-  document.getElementById('error-messages').innerHTML = '';
-}
-showStep(currentStep);
-
-stepTabs.forEach((tab,i)=>tab.onclick=()=>showStep(i));
-document.querySelectorAll('.btn-next').forEach(btn=>btn.onclick=()=>{currentStep++;showStep(currentStep)});
-document.querySelectorAll('.btn-prev').forEach(btn=>btn.onclick=()=>{currentStep--;showStep(currentStep)});
-
-// ========== تحققات فورية ورسائل خطأ ==========
-function validateStep(stepIdx) {
-  let valid = true, messages = [];
-  const card = steps[stepIdx];
-  card.querySelectorAll('input[required]').forEach(el=>{
-    if (!el.value || isNaN(Number(el.value))) {
-      valid = false;
-      el.classList.add('input-error');
-      messages.push('يرجى تعبئة الحقول الإجبارية بشكل صحيح');
-    } else {
-      el.classList.remove('input-error');
-    }
-  });
-  // تحقق إضافي منطق الأعمال:
-  if (stepIdx == 2) { // التمويل
-    let val = +document.getElementById('loanToValue').value;
-    let years = +document.getElementById('years').value;
-    if(val>100){ valid=false; messages.push('نسبة القرض لا يمكن أن تتجاوز 100%'); }
-    if(+document.getElementById('loanYears').value > years){ valid=false; messages.push('مدة القرض لا يمكن أن تتجاوز مدة العقد'); }
+  function getCurrentCapMode() {
+    let mode = 'detailed';
+    capModeRadios.forEach(r => { if (r.checked) mode = r.value; });
+    return mode;
   }
-  document.getElementById('error-messages').innerHTML = messages.length ? messages.join('<br>') : '';
-  return valid;
-}
-steps.forEach((card,idx)=>{
-  card.querySelectorAll('.btn-next, .btn-calc').forEach(btn=>{
-    btn.onclick = (e) => {
-      if (!validateStep(idx)) {e.preventDefault();return false;}
+  function updateCapVisibility() {
+    const mode = getCurrentCapMode();
+    capDetailsDiv.classList.toggle('hidden', mode !== 'detailed');
+    capDirectDiv.classList.toggle('hidden', mode !== 'direct');
+  }
+  function updateBalloonVisibility() {
+    balloonOptionsDiv.classList.toggle('hidden', loanTypeSelect.value !== 'balloon');
+  }
+  loanTypeSelect.addEventListener('change', () => {
+    updateBalloonVisibility();
+    updateSliderAndResults();
+  });
+  capModeRadios.forEach(r => r.addEventListener('change', () => {
+    updateCapVisibility();
+    updateSliderAndResults();
+  }));
+
+  function numberFormat(n) {
+    // دائمًا أرقام إنجليزية
+    if (typeof n === "number") {
+      return n.toLocaleString('en-US', {maximumFractionDigits: 0});
+    } else if (typeof n === "string" && n.trim() !== "" && !isNaN(Number(n))) {
+      return Number(n).toLocaleString('en-US', {maximumFractionDigits: 0});
     }
+    return n;
+  }
+  function getFreePeriodInYears() {
+    const years = +document.getElementById('years').value;
+    const value = +document.getElementById('freePeriodValue').value;
+    const unit = document.getElementById('freePeriodUnit').value;
+    if (unit === 'years') return value;
+    if (unit === 'months') return value / 12;
+    if (unit === 'days') return value / 365;
+    if (unit === 'percent') return (value / 100) * years;
+    return value;
+  }
+  function getBalloonFinalPayment(loanAmount) {
+    const balloonType = balloonTypeSelect.value;
+    const balloonValue = +balloonValueInput.value;
+    if (balloonType === 'percent') {
+      return loanAmount * (balloonValue / 100);
+    }
+    return balloonValue;
+  }
+  // الدالة الصحيحة لحساب خدمة الدين في حالة دفعة أخيرة مع فترة السماح
+  function loanDebtSchedule(amount, annualRate, years, type, totalYears, balloonFinalPayment, graceYears) {
+    let debtPayments = Array(totalYears).fill(0);
+    if (type === 'equalInstallments') {
+      let r = annualRate / 100;
+      let n = years;
+      let pmt = (r === 0) ? amount / n : amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      for (let i = 0; i < totalYears; i++) {
+        if (i < graceYears) {
+          debtPayments[i] = 0;
+        } else if (i < years) {
+          debtPayments[i] = pmt;
+        }
+      }
+    } else if (type === 'balloon') {
+      let n = years - graceYears;
+      if (n < 1) n = 1;
+      let balloon = balloonFinalPayment;
+      let principalToAmortize = amount - balloon;
+      let yearlyPrincipal = (n > 1) ? principalToAmortize / n : principalToAmortize;
+      let balance = amount;
+      for (let i = 0; i < totalYears; i++) {
+        if (i < graceYears) {
+          debtPayments[i] = 0;
+        } else if (i < years - 1) {
+          let interest = balance * (annualRate / 100);
+          debtPayments[i] = yearlyPrincipal + interest;
+          balance -= yearlyPrincipal;
+        } else if (i === years - 1) {
+          let interest = balance * (annualRate / 100);
+          debtPayments[i] = yearlyPrincipal + balloon + interest;
+          balance = 0;
+        }
+      }
+    }
+    return debtPayments;
+  }
+  function loanAnnualPayment(amount, annualRate, years, type, balloonFinalPayment = 0, graceYears = 0) {
+    if (type === 'equalInstallments') {
+      if (annualRate === 0) return amount / years;
+      const r = annualRate / 100;
+      const n = years;
+      return amount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    } else if (type === 'balloon') {
+      let n = years - graceYears;
+      if (n < 1) n = 1;
+      let balloon = balloonFinalPayment;
+      let principalToAmortize = amount - balloon;
+      return (n > 1) ? principalToAmortize / n : principalToAmortize;
+    }
+    return 0;
+  }
+  function financials(annualRentBase) {
+    const years = +document.getElementById('years').value;
+    const freePeriod = getFreePeriodInYears();
+    const rentIncreasePercent = +document.getElementById('rentIncreasePercent').value / 100;
+    const increaseCycle = +document.getElementById('increaseCycle').value;
+    const landArea = +document.getElementById('landArea').value;
+    const buildRatio = +document.getElementById('buildRatio').value;
+    const buildPercent = +document.getElementById('buildPercent').value / 100;
+    const buildCost = +document.getElementById('buildCost').value;
+    const siteCost = +document.getElementById('siteCost').value;
+    const basementCost = +document.getElementById('basementCost').value;
+    const engSupervision = +document.getElementById('engSupervisionPercent').value / 100;
+    const indirectCost = +document.getElementById('indirectCostPercent').value / 100;
+    const riskPercent = +document.getElementById('riskPercent').value / 100;
+    const projectDuration = +document.getElementById('projectDuration').value;
+    const directCapCost = +document.getElementById('directCapCost').value;
+    const capMode = getCurrentCapMode();
+    const buildingAreas = landArea * buildRatio;
+    const siteArea = landArea - (landArea * buildPercent);
+    const constructionCost =
+      (buildingAreas * buildCost) +
+      (siteArea * siteCost) +
+      (landArea * basementCost);
+    const detailedCap =
+      constructionCost * (1 + engSupervision + indirectCost + riskPercent);
+    const totalCapCost = capMode === 'detailed' ? detailedCap : directCapCost;
+    const devCostPerYear = projectDuration > 0 ? totalCapCost / projectDuration : totalCapCost;
+    const totalIncome = +document.getElementById('totalIncome').value;
+    const incomeGrowthPercent = +document.getElementById('incomeGrowthPercent').value / 100;
+    const netIncomePercent = +document.getElementById('netIncomePercent').value / 100;
+    const incomeStartYears = +document.getElementById('incomeStartYears').value;
+    const targetGrowthPercent = +document.getElementById('targetGrowthPercent').value / 100;
+    const startIncomePercent = +document.getElementById('startIncomePercent').value / 100;
+    const discountRate = +document.getElementById('discountRate').value / 100;
+    const loanToValue = +document.getElementById('loanToValue').value / 100;
+    const loanYears = +document.getElementById('loanYears').value;
+    const interestRate = +document.getElementById('interestRate').value;
+    const loanType = loanTypeSelect.value;
+    const balloonFinalPayment = loanType === 'balloon' ? getBalloonFinalPayment(totalCapCost * loanToValue) : 0;
+    const loanGrace = +loanGraceInput.value;
+    const loanAmount = totalCapCost * loanToValue;
+    const annualDebtService = loanAnnualPayment(loanAmount, interestRate, loanYears, loanType, balloonFinalPayment, loanGrace);
+    const debtSchedule = loanDebtSchedule(loanAmount, interestRate, loanYears, loanType, years, balloonFinalPayment, loanGrace);
+    let rows = [];
+    let reachedFullIncome = false;
+    const fullFreeYears = Math.floor(freePeriod);
+    const fractionalFree = freePeriod - fullFreeYears;
+    let firstIncomeYear = Math.max(fullFreeYears, incomeStartYears) + 1;
+    let yearIncome = 0;
+    let cumulativeCashflow = 0;
+    let cumulativeCashflowAfterDebt = 0;
+    let annualRent = 0;
+    let rentYearBase = annualRentBase;
+    let rentIncreaseCounter = 0;
+    let npv = 0, npvAfterDebt = 0;
+    let sumYearIncome = 0, sumNetIncome = 0, sumAnnualRent = 0, sumDevCost = 0, sumCashflow = 0, sumCashflowAfterDebt = 0;
+    let cashflows = [];
+    let cashflowsAfterDebt = [];
+    let totalContractRent = 0;
+    let breakEvenYear = null;
+    let breakEvenMonth = null;
+    let breakEvenDay = null;
+    let breakEvenIdx = null;
+    for (let i = 1; i <= years; i++) {
+      if (i < firstIncomeYear) {
+        yearIncome = 0;
+      } else if (i === firstIncomeYear) {
+        yearIncome = totalIncome * startIncomePercent;
+      } else if (!reachedFullIncome) {
+        yearIncome = yearIncome * (1 + targetGrowthPercent);
+        if (yearIncome >= totalIncome) {
+          yearIncome = totalIncome;
+          reachedFullIncome = true;
+        }
+      } else {
+        yearIncome = yearIncome * (1 + incomeGrowthPercent);
+      }
+      if (i <= fullFreeYears) {
+        annualRent = 0;
+      } else if (i === fullFreeYears + 1 && fractionalFree > 0) {
+        annualRent = rentYearBase * (1 - fractionalFree);
+      } else {
+        annualRent = rentYearBase;
+      }
+      if (i > fullFreeYears + 1) {
+        rentIncreaseCounter++;
+        if (increaseCycle > 0 && rentIncreaseCounter % increaseCycle === 0) {
+          rentYearBase *= (1 + rentIncreasePercent);
+        }
+      }
+      let netIncome = yearIncome * netIncomePercent;
+      let devCostThisYear = (i <= projectDuration) ? devCostPerYear : 0;
+      let debtPayment = debtSchedule[i - 1] || 0;
+      let cashflow = netIncome - annualRent - devCostThisYear;
+      let cashflowAfterDebt = cashflow - debtPayment;
+      cumulativeCashflow += cashflow;
+      cumulativeCashflowAfterDebt += cashflowAfterDebt;
+      npv += cashflow / Math.pow(1 + discountRate, i);
+      npvAfterDebt += cashflowAfterDebt / Math.pow(1 + discountRate, i);
+      sumYearIncome += yearIncome;
+      sumNetIncome += netIncome;
+      sumAnnualRent += annualRent;
+      sumDevCost += devCostThisYear;
+      sumCashflow += cashflow;
+      sumCashflowAfterDebt += cashflowAfterDebt;
+      totalContractRent += annualRent;
+      cashflows.push(cashflow);
+      cashflowsAfterDebt.push(cashflowAfterDebt);
+      if (breakEvenIdx == null && cumulativeCashflow >= -1 && cumulativeCashflow <= 1) {
+        breakEvenIdx = i;
+      } else if (breakEvenIdx == null && cumulativeCashflow > 0 && rows.length > 0 && rows[rows.length-1].cumulativeCashflow < 0) {
+        let prevCum = rows[rows.length-1].cumulativeCashflow;
+        let prevYear = i-1;
+        let delta = cumulativeCashflow - prevCum;
+        let frac = (-prevCum) / delta;
+        let fullDays = frac * 365;
+        breakEvenYear = prevYear + Math.floor(fullDays / 365);
+        breakEvenMonth = Math.floor((fullDays % 365) / 30.4375);
+        breakEvenDay = Math.round((fullDays % 365) % 30.4375);
+        breakEvenIdx = i;
+      }
+      rows.push({
+        year: i,
+        yearIncome: yearIncome,
+        netIncome: netIncome,
+        annualRent: annualRent,
+        devCostThisYear: devCostThisYear,
+        debtPayment: debtPayment,
+        cashflow: cashflow,
+        cashflowAfterDebt: cashflowAfterDebt,
+        cumulativeCashflow: cumulativeCashflow,
+        cumulativeCashflowAfterDebt: cumulativeCashflowAfterDebt
+      });
+    }
+    let breakEvenText = '';
+    if (breakEvenIdx != null && breakEvenYear != null) {
+      breakEvenText = `${breakEvenYear} سنة و${breakEvenMonth} شهر و${breakEvenDay} يوم`;
+    } else if (breakEvenIdx != null) {
+      breakEvenText = `${breakEvenIdx} سنة`;
+    } else {
+      breakEvenText = 'لم تتحقق نقطة التعادل';
+    }
+    return {
+      buildingAreas,
+      siteArea,
+      constructionCost,
+      totalDevCost: totalCapCost,
+      npv,
+      npvAfterDebt,
+      rows,
+      cashflows,
+      cashflowsAfterDebt,
+      breakEvenText,
+      loanAmount,
+      annualDebtService,
+      sumCashflowAfterDebt,
+      totals: {
+        sumYearIncome,
+        sumNetIncome,
+        sumAnnualRent,
+        sumDevCost,
+        sumCashflow,
+        totalContractRent,
+        avgAnnualRent: sumAnnualRent / years,
+        avgYearIncome: sumYearIncome / years,
+        avgNetIncome: sumNetIncome / years
+      },
+      totalCapCost
+    };
+  }
+  function findMaxRentValue() {
+    let lo = 0, hi = 1e8, best = 0;
+    let tolerance = 1.0;
+    for (let iter = 0; iter < 40; iter++) {
+      let mid = (lo + hi) / 2;
+      let npv = financials(mid).npv;
+      if (Math.abs(npv) <= tolerance) {
+        best = mid;
+        break;
+      }
+      if (npv > 0) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+      best = mid;
+    }
+    return best;
+  }
+  function computeIRR(cashflows, initialInvestment) {
+    let fullCashflows = [-initialInvestment, ...cashflows];
+    let guess = 0.10;
+    let maxIter = 1000;
+    let tol = 1e-6;
+    let irr = guess;
+    for (let iter = 0; iter < maxIter; iter++) {
+      let npv = 0;
+      let d_npv = 0;
+      for (let t = 0; t < fullCashflows.length; t++) {
+        npv += fullCashflows[t] / Math.pow(1 + irr, t);
+        if (t > 0) d_npv += - t * fullCashflows[t] / Math.pow(1 + irr, t + 1);
+      }
+      if (Math.abs(npv) < tol) return irr * 100;
+      let new_irr = irr - npv / d_npv;
+      if (Math.abs(new_irr - irr) < tol) return new_irr * 100;
+      irr = new_irr;
+      if (irr < -0.99) return null;
+    }
+    return null;
+  }
+  function updateUIFromSlider() {
+    let rentVal = +maxRentSlider.value;
+    sliderRentVal.textContent = numberFormat(rentVal);
+    document.getElementById('annualRent').value = rentVal;
+    updateResults(rentVal);
+  }
+  function updateResults(sliderRentValOverride = null) {
+    let rentVal = sliderRentValOverride !== null
+      ? sliderRentValOverride
+      : +document.getElementById('annualRent').value;
+    const results = financials(rentVal);
+    buildingAreasSpan.textContent = numberFormat(results.buildingAreas);
+    siteAreaSpan.textContent = numberFormat(results.siteArea);
+    constructionCostSpan.textContent = numberFormat(results.constructionCost);
+    totalCapCostSpan.textContent = numberFormat(results.totalCapCost);
+    totalDevCostSpan.textContent = numberFormat(results.totalDevCost);
+    totalContractRentSpan.textContent = numberFormat(results.totals.totalContractRent);
+    avgAnnualRentSpan.textContent = numberFormat(results.totals.avgAnnualRent);
+    avgYearIncomeSpan.textContent = numberFormat(results.totals.avgYearIncome);
+    avgNetIncomeSpan.textContent = numberFormat(results.totals.avgNetIncome);
+    totalCashflowSpan.textContent = numberFormat(results.totals.sumCashflow);
+    npvResultSpan.textContent = numberFormat(results.npv);
+    let irr = computeIRR(results.cashflows, results.totalDevCost);
+    irrResultSpan.textContent = (irr !== null && isFinite(irr)) ? irr.toFixed(2) : "غير متحقق";
+    breakEvenPointSpan.textContent = results.breakEvenText;
+    loanAmountSpan.textContent = numberFormat(results.loanAmount);
+    annualDebtServiceSpan.textContent = numberFormat(results.annualDebtService);
+    netCashflowAfterDebtSpan.textContent = numberFormat(results.sumCashflowAfterDebt);
+    npvAfterDebtSpan.textContent = numberFormat(results.npvAfterDebt);
+    let irrAfterDebt = computeIRR(results.cashflowsAfterDebt, results.totalDevCost - results.loanAmount);
+    irrAfterDebtSpan.textContent = (irrAfterDebt !== null && isFinite(irrAfterDebt)) ? irrAfterDebt.toFixed(2) : "غير متحقق";
+    let tableHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>السنة</th>
+            <th>الدخل السنوي (ريال)</th>
+            <th>صافي الدخل (ريال)</th>
+            <th>الأجرة السنوية (ريال)</th>
+            <th>تكاليف التطوير السنوية (ريال)</th>
+            <th>خدمة الدين (ريال)</th>
+            <th>التدفق النقدي (ريال)</th>
+            <th>التدفق بعد الدين (ريال)</th>
+            <th>صافي التدفقات التراكمي (ريال)</th>
+            <th>صافي التراكمي بعد الدين (ريال)</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    results.rows.forEach(r => {
+      tableHtml += `
+        <tr>
+          <td>${r.year}</td>
+          <td>${numberFormat(r.yearIncome)}</td>
+          <td>${numberFormat(r.netIncome)}</td>
+          <td class="cashflow-negative">${r.annualRent > 0 ? '-' : ''}${numberFormat(r.annualRent)}</td>
+          <td class="cashflow-negative">${r.devCostThisYear > 0 ? '-' : ''}${numberFormat(r.devCostThisYear)}</td>
+          <td class="cashflow-negative">${r.debtPayment > 0 ? '-' : ''}${numberFormat(r.debtPayment)}</td>
+          <td class="${r.cashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cashflow)}</td>
+          <td class="${r.cashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cashflowAfterDebt)}</td>
+          <td class="${r.cumulativeCashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cumulativeCashflow)}</td>
+          <td class="${r.cumulativeCashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(r.cumulativeCashflowAfterDebt)}</td>
+        </tr>
+      `;
+    });
+    tableHtml += `</tbody>
+      <tfoot>
+        <tr>
+          <td>الإجمالي</td>
+          <td>${numberFormat(results.totals.sumYearIncome)}</td>
+          <td>${numberFormat(results.totals.sumNetIncome)}</td>
+          <td class="cashflow-negative">${results.totals.sumAnnualRent > 0 ? '-' : ''}${numberFormat(results.totals.sumAnnualRent)}</td>
+          <td class="cashflow-negative">${results.totals.sumDevCost > 0 ? '-' : ''}${numberFormat(results.totals.sumDevCost)}</td>
+          <td></td>
+          <td class="${results.totals.sumCashflow < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(results.totals.sumCashflow)}</td>
+          <td class="${results.sumCashflowAfterDebt < 0 ? 'cashflow-negative' : 'cashflow-positive'}">${numberFormat(results.sumCashflowAfterDebt)}</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>`;
+    cashflowTableDiv.innerHTML = tableHtml;
+  }
+  function updateSliderAndResults() {
+    const maxRent = findMaxRentValue();
+    maxRentSlider.max = Math.ceil(maxRent / 100) * 100;
+    if (+maxRentSlider.value > +maxRentSlider.max) maxRentSlider.value = maxRentSlider.max;
+    maxRentSlider.min = 0;
+    if (+document.getElementById('annualRent').value !== +maxRentSlider.value) {
+      maxRentSlider.value = document.getElementById('annualRent').value;
+    }
+    sliderRentVal.textContent = numberFormat(maxRentSlider.value);
+    updateResults(+maxRentSlider.value);
+  }
+  inputs.forEach(i => i.addEventListener('input', updateSliderAndResults));
+  maxRentSlider.addEventListener('input', updateUIFromSlider);
+  directCapCostInput.addEventListener('input', updateSliderAndResults);
+  balloonValueInput.addEventListener('input', updateSliderAndResults);
+  balloonTypeSelect.addEventListener('change', updateSliderAndResults);
+  loanGraceInput.addEventListener('input', updateSliderAndResults);
+  updateCapVisibility();
+  updateBalloonVisibility();
+  updateSliderAndResults();
+  document.getElementById('exportPDF').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const scale = 2;
+    const reportSections = [
+      document.getElementById('results'),
+      document.getElementById('cashflow-section')
+    ];
+    let y = 10;
+    let addSectionToPDF = (section, done) => {
+      html2canvas(section, {scale: scale, useCORS:true}).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pageWidth = doc.internal.pageSize.getWidth() - 20;
+        const pageHeight = doc.internal.pageSize.getHeight() - 20;
+        const imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = pageWidth;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        if(pdfHeight > pageHeight) {
+          pdfHeight = pageHeight;
+          pdfWidth = (imgProps.width * pdfHeight) / imgProps.height;
+        }
+        if (y + pdfHeight > doc.internal.pageSize.getHeight() - 10) {
+          doc.addPage();
+          y = 10;
+        }
+        doc.addImage(imgData, 'PNG', 10, y, pdfWidth, pdfHeight);
+        y += pdfHeight + 10;
+        done();
+      });
+    };
+    let i = 0;
+    function next() {
+      if (i < reportSections.length) {
+        addSectionToPDF(reportSections[i++], next);
+      } else {
+        doc.save('تقرير_تحليل_العقار.pdf');
+      }
+    }
+    next();
   });
 });
-
-// ========== تغيير وضع التكاليف =============
-function updateCapCostMode() {
-  let mode = document.querySelector('input[name="capCostMode"]:checked').value;
-  document.getElementById('cap-details').classList.toggle('hidden',mode!=='detailed');
-  document.getElementById('cap-direct').classList.toggle('hidden',mode!=='direct');
-}
-document.querySelectorAll('input[name="capCostMode"]').forEach(r=>r.onchange=updateCapCostMode);
-updateCapCostMode();
-
-// ========== أرقام إنجليزية مع فواصل ==========
-function numberFormat(n, decimals=0) {
-  if (n == null || n === '' || isNaN(Number(n))) return '-';
-  return Number(n).toLocaleString('en-US',{maximumFractionDigits:decimals});
-}
-
-// ========== زر إعادة تعيين ==========
-document.getElementById('resetAll').onclick = ()=>{ location.reload(); };
-
-// ========== الحسابات والنتائج ==========
-document.getElementById('step5').onsubmit = function(e){
-  e.preventDefault();
-  if(!validateStep(4)) return false;
-  calcResults();
-  document.getElementById('results').classList.remove('hidden');
-  document.getElementById('cashflow-section').classList.remove('hidden');
-  window.scrollTo({top: document.getElementById('results').offsetTop-30,behavior:'smooth'});
-};
-
-function calcResults(){
-  // قراءات القيم
-  let years = +document.getElementById('years').value;
-  let freePeriod = +document.getElementById('freePeriodValue').value;
-  let freeUnit = document.getElementById('freePeriodUnit').value;
-  let rentIncrease = +document.getElementById('rentIncreasePercent').value;
-  let increaseCycle = +document.getElementById('increaseCycle').value;
-  let annualRent = +document.getElementById('annualRent').value;
-  // ... تكاليف رأسمالية
-  let capMode = document.querySelector('input[name="capCostMode"]:checked').value;
-  let totalCapCost = capMode === 'detailed'
-    ? ( // حساب مفصل
-      (+document.getElementById('landArea').value || 0) * (+document.getElementById('buildRatio').value || 0) * (+document.getElementById('buildPercent').value||0)/100 * (+document.getElementById('buildCost').value||0)
-      + (+document.getElementById('landArea').value || 0) * (+document.getElementById('siteCost').value || 0)
-      + (+document.getElementById('landArea').value || 0) * (+document.getElementById('basementCost').value || 0)
-    ) * (1 + (+document.getElementById('engSupervisionPercent').value||0)/100 + (+document.getElementById('indirectCostPercent').value||0)/100 + (+document.getElementById('riskPercent').value||0)/100)
-    : +document.getElementById('directCapCost').value;
-  // ... التمويل
-  let loanPercent = +document.getElementById('loanToValue').value;
-  let loanYears = +document.getElementById('loanYears').value;
-  let interest = +document.getElementById('interestRate').value;
-  let loanGrace = +document.getElementById('loanGrace').value;
-  let loanType = document.getElementById('loanType').value;
-  let balloonVal = +document.getElementById('balloonValue').value;
-  let balloonType = document.getElementById('balloonType') ? document.getElementById('balloonType').value : 'amount';
-  // ... الدخل
-  let totalIncome = +document.getElementById('totalIncome').value;
-  let incomeGrowth = +document.getElementById('incomeGrowthPercent').value;
-  let netIncomePercent = +document.getElementById('netIncomePercent').value;
-  let incomeStartYears = +document.getElementById('incomeStartYears').value;
-  let targetGrowth = +document.getElementById('targetGrowthPercent').value;
-  let startIncomePercent = +document.getElementById('startIncomePercent').value;
-  // ... معدل الخصم
-  let discountRate = +document.getElementById('discountRate').value;
-
-  // أمثلة حسابية مبسطة (اضبطها حسب منطقك الفعلي)
-  let totalContractRent = annualRent * years;
-  let avgAnnualRent = annualRent; // للتبسيط
-  let avgYearIncome = totalIncome;
-  let avgNetIncome = totalIncome * netIncomePercent/100;
-  let totalCashflow = avgNetIncome*years - totalContractRent;
-  let npv = totalCashflow/(1+discountRate/100); // تبسيط فقط
-  let irr = ((avgNetIncome-annualRent)/totalCapCost)*100;
-  let breakEven = annualRent; // للتبسيط
-  let loanAmount = totalCapCost * loanPercent/100;
-  let annualDebtService = loanAmount * interest/100;
-  let netCashflowAfterDebt = avgNetIncome - annualRent - annualDebtService;
-  let npvAfterDebt = npv - annualDebtService*years;
-  let irrAfterDebt = ((avgNetIncome-annualRent-annualDebtService)/totalCapCost)*100;
-
-  // عرض النتائج
-  document.getElementById('totalDevCost').innerText = numberFormat(totalCapCost);
-  document.getElementById('totalContractRent').innerText = numberFormat(totalContractRent);
-  document.getElementById('avgAnnualRent').innerText = numberFormat(avgAnnualRent);
-  document.getElementById('avgYearIncome').innerText = numberFormat(avgYearIncome);
-  document.getElementById('avgNetIncome').innerText = numberFormat(avgNetIncome);
-  document.getElementById('totalCashflow').innerText = numberFormat(totalCashflow);
-  document.getElementById('npvResult').innerText = numberFormat(npv,2);
-  document.getElementById('irrResult').innerText = numberFormat(irr,2);
-  document.getElementById('breakEvenPoint').innerText = numberFormat(breakEven);
-  document.getElementById('loanAmount').innerText = numberFormat(loanAmount);
-  document.getElementById('annualDebtService').innerText = numberFormat(annualDebtService);
-  document.getElementById('netCashflowAfterDebt').innerText = numberFormat(netCashflowAfterDebt);
-  document.getElementById('npvAfterDebt').innerText = numberFormat(npvAfterDebt,2);
-  document.getElementById('irrAfterDebt').innerText = numberFormat(irrAfterDebt,2);
-
-  // شرح النتائج
-  document.getElementById('summary-explain').innerHTML = `
-    <i class="fa-solid fa-lightbulb"></i>
-    بناءً على المدخلات، أعلى قيمة إيجار سنوي يمكنك دفعها لتحقيق التوازن بين التكاليف والدخل هي تقريبًا <b>${numberFormat(breakEven)}</b> ريال. إذا أصبح صافي القيمة الحالية (NPV) سلبيًا، فهذا يعني أن المشروع غير مربح بهذه القيمة التأجيرية.
-  `;
-
-  // تنبيه ملون إذا NPV سلبي
-  if(npv<0)
-    document.getElementById('result-alert').innerHTML = "⚠️ انتبه: صافي القيمة الحالية للمشروع سلبي! يوصى بمراجعة الأرقام أو خفض الإيجار أو زيادة الدخل.";
-  else
-    document.getElementById('result-alert').innerHTML = "";
-
-  // قيم المزلاج
-  let slider = document.getElementById('maxRentSlider');
-  slider.value = annualRent;
-  slider.max = Math.max(annualRent*2,annualRent+50000,breakEven*1.1);
-  document.getElementById('sliderRentVal').innerText = numberFormat(slider.value);
-
-  slider.oninput = function(){
-    document.getElementById('sliderRentVal').innerText = numberFormat(this.value);
-    // تحديث النتائج تلقائياً عند تحريك المزلاج (مثال سريع: غيّر فقط NPV وBreakEven)
-    let newRent = +this.value;
-    let newTotalContractRent = newRent * years;
-    let newTotalCashflow = avgNetIncome*years - newTotalContractRent;
-    let newNpv = newTotalCashflow/(1+discountRate/100);
-    document.getElementById('totalContractRent').innerText = numberFormat(newTotalContractRent);
-    document.getElementById('npvResult').innerText = numberFormat(newNpv,2);
-    document.getElementById('breakEvenPoint').innerText = numberFormat(newRent);
-    if(newNpv<0)
-      document.getElementById('result-alert').innerHTML = "⚠️ انتبه: صافي القيمة الحالية للمشروع سلبي!";
-    else
-      document.getElementById('result-alert').innerHTML = "";
-  };
-
-  // جدول التدفقات النقدية
-  let cashPerYear = [];
-  for(let i=1;i<=years;i++) cashPerYear.push(avgNetIncome-annualRent);
-  showCashflowChart(cashPerYear);
-
-  // جدول التدفقات النقدية السنوية
-  let table = `<table><tr><th>السنة</th><th>صافي الدخل</th><th>الإيجار</th><th>صافي التدفق النقدي</th></tr>`;
-  for(let i=1;i<=years;i++)
-    table+=`<tr><td>${numberFormat(i)}</td><td>${numberFormat(avgNetIncome)}</td><td>${numberFormat(annualRent)}</td><td>${numberFormat(avgNetIncome-annualRent)}</td></tr>`;
-  table+='</table>';
-  document.getElementById('cashflowTable').innerHTML = table;
-}
-
-// ========== رسم بياني للتدفقات النقدية ==========
-function showCashflowChart(arr){
-  let ctx = document.getElementById('cashflowChart').getContext('2d');
-  if(window._cashChart) window._cashChart.destroy();
-  window._cashChart = new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels: arr.map((_,i)=>"سنة "+numberFormat(i+1)),
-      datasets:[{
-        label: "صافي التدفق النقدي",
-        data: arr,
-        backgroundColor: arr.map(v=>v>=0?'#1a9c5a':'#e74c3c')
-      }]
-    },
-    options:{
-      responsive:true,
-      scales:{y:{beginAtZero:true}},
-      plugins:{legend:{display:false}}
-    }
-  });
-}
-
-// ========== تصدير PDF ==========
-document.getElementById('exportPDF').onclick = function() {
-  document.body.style.zoom = "90%";
-  html2canvas(document.querySelector("#results")).then(canvas => {
-    let imgData = canvas.toDataURL('image/png');
-    let pdf = new window.jspdf.jsPDF('p','mm','a4');
-    pdf.addImage(imgData,'PNG',10,10,190,0);
-    pdf.save("rent-calculator-report.pdf");
-    document.body.style.zoom = "100%";
-  });
-};
