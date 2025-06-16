@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     .sub-title {
       color: #444;
@@ -32,6 +33,47 @@
       border-radius: 10px;
       padding: 10px 12px;
     }
+    .footer-section {
+      background: #f7faff;
+      margin: 40px auto 0 auto;
+      text-align: center;
+      padding: 28px 8px 10px 8px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px #0001;
+      max-width: 600px;
+    }
+    .footer-section .footer-note {
+      color: #434343;
+      font-size: 1.08em;
+      margin-bottom: 8px;
+      font-weight: 500;
+      line-height: 1.7;
+    }
+    .footer-section .footer-rights {
+      color: #777;
+      font-size: 1em;
+      margin-bottom: 14px;
+    }
+    .footer-social {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+    .footer-social a {
+      color: #23408e;
+      font-size: 1.8em;
+      transition: color 0.2s, transform 0.2s;
+      display: inline-block;
+    }
+    .footer-social a:hover {
+      color: #3a91e8;
+      transform: scale(1.18) rotate(-8deg);
+    }
+    @media(max-width:500px) {
+      .footer-section { padding: 18px 2px 8px 2px; }
+      .footer-social a { font-size: 1.35em; }
+    }
   </style>
 </head>
 <body>
@@ -42,7 +84,6 @@
   <form id="calc-form">
     <div class="card">
       <h2>معلومات عقد الاستئجار</h2>
-      <!-- نفس المدخلات السابقة لهذا القسم -->
       <label>عدد السنوات
         <input type="number" id="years" min="1" max="100" value="20">
       </label>
@@ -180,6 +221,21 @@
   </div>
 
   <div id="error-messages" style="color: red; text-align: center; margin-top: 20px;"></div>
+
+  <!-- القسم الختامي -->
+  <div class="footer-section">
+    <div class="footer-note">
+      يجدر الانتباه إلى أن النتائج استرشادية ويوصى دائماً بالعمل مع الجهات المتخصصة
+    </div>
+    <div class="footer-rights">
+      جميع الحقوق محفوظة - 2025م
+    </div>
+    <div class="footer-social">
+      <a href="https://www.linkedin.com/in/abdulrahman-abalkhail/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+      <a href="https://x.com/archabalkhail" target="_blank" title="X (Twitter)"><i class="fab fa-x-twitter"></i></a>
+      <a href="https://wa.me/966552622141" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
